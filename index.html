@@ -84,6 +84,12 @@ body {
     padding: 4px;
 }
 
+.sortable {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
 .arrow {
     margin-left: 5px;
     font-size: 12px;
@@ -156,60 +162,6 @@ tr:hover {
     font-size: 11px;
     margin-left: 5px;
 }
-
-/* Modale rendement */
-.renta-click {
-    background: none;
-    border: none;
-    padding: 0;
-    font: inherit;
-    font-weight: bold;
-    cursor: pointer;
-    text-decoration: underline;
-}
-
-dialog {
-    border: none;
-    border-radius: 10px;
-    width: min(760px, 95vw);
-    padding: 20px;
-}
-
-.modal-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin: 12px 0;
-}
-
-.modal-grid label {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    font-size: 14px;
-}
-
-.modal-grid input {
-    padding: 8px;
-    border: 1px solid #dcdde1;
-    border-radius: 6px;
-}
-
-.calc-box {
-    background: #f1f7ff;
-    border: 1px solid #cfe3ff;
-    border-radius: 8px;
-    padding: 10px;
-    margin: 12px 0;
-    white-space: pre-line;
-    font-size: 14px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
 </style>
 </head>
 
@@ -226,7 +178,7 @@ dialog {
         <a href="anniversaires.html" class="btn-anniv">🎂 Anniversaires</a>
 
         <input type="text" id="search" placeholder="🔍 Rechercher un client...">
-        <input type="number" id="filter-renta" placeholder="Min /100" style="width:120px;">
+        <input type="number" id="filter-renta" placeholder="Min /10" style="width:120px;">
     </div>
 </div>
 
@@ -260,14 +212,19 @@ dialog {
 <th>Clôture</th>
 <th>Structure</th>
 <th>Ancienneté</th>
-<th>Temps passé</th>
 <th>Honos</th>
 <th>Collab</th>
 <th>Assistant</th>
 <th onclick="sortByCA()">CA 🔽</th>
-<th onclick="sortByResultat()">Résultat 🔽</th>
+
+<th onclick="sortByResultat()">
+    Résultat <span class="arrow">🔽</span>
+</th>
+
 <th>Activité</th>
+
 <th onclick="sortByRentabilite()">Rentabilité 🔽</th>
+
 <th>Action</th>
 </tr>
 </thead>
@@ -277,169 +234,23 @@ dialog {
 
 </div>
 
-<dialog id="edit-renta-dialog">
-    <h3 id="edit-renta-title">Modifier rendement</h3>
-
-    <div class="modal-grid">
-        <label>Temps passé (h)
-            <input id="edit-temps-passe" type="number" min="0" step="0.01">
-        </label>
-
-        <label>Honoraires cpta (€)
-            <input id="edit-honos" type="number" step="0.01">
-        </label>
-
-        <label>Résultat R (€)
-            <input id="edit-resultat" type="number" step="0.01">
-        </label>
-
-        <label>Ancienneté (ans)
-            <input id="edit-anciennete" type="number" min="0" step="0.01">
-        </label>
-    </div>
-
-    <div id="edit-renta-info" class="calc-box"></div>
-
-    <div class="modal-actions">
-        <button class="btn" style="background:#7f8c8d" onclick="closeRentaModal()">Annuler</button>
-        <button class="btn" onclick="saveRentaEdit()">Enregistrer</button>
-    </div>
-</dialog>
-
 <script src="utils.js"></script>
 <script>
 let clientsData = [];
-let editingClientId = null;
 
-/* ===== Helpers ===== */
-function parseNum(v) {
-    if (v === null || v === undefined || v === "") return 0;
-    const n = parseFloat(String(v).replace(",", "."));
-    return isNaN(n) ? 0 : n;
-}
-
-// Calcul demandé
-function calculateRendement(row) {
-    const temps = parseNum(row["temps passé"]);
-    const honos = parseNum(row["honoraires cpta"]);
-    const ca = parseNum(row["CA R"]);
-    const resultat = parseNum(row["resultat R"]);
-    const anciennete = parseNum(row["ancienneté"]);
-
-    const p1 = Math.min((temps > 0 ? honos / temps : 0) / 100, 1) * 40;
-    const p2 = Math.min((ca + resultat) / 100000, 1) * 30;
-
-    const bonusAnc = anciennete > 10 ? 10 : (anciennete > 5 ? 5 : (anciennete < 1 ? -10 : 0));
-    const malusRes = resultat < 0 ? 15 : 0;
-    const p3 = 30 + bonusAnc - malusRes;
-
-    return Math.round(p1 + p2 + p3);
+/* 🔥 RENTABILITE */
+function getRentabiliteScore(val) {
+    const v = parseFloat(val) || 0;
+    return Math.min((v / 100) * 10, 10);
 }
 
 function getColor(score) {
-    if (score < 40) return "#e74c3c";
-    if (score < 70) return "#f39c12";
+    if (score < 4) return "#e74c3c";
+    if (score < 7) return "#f39c12";
     return "#27ae60";
 }
 
-function refreshRentaInfo() {
-    const client = clientsData.find(c => String(c.id) === String(editingClientId)) || {};
-
-    const draft = {
-        ...client,
-        "temps passé": parseNum(document.getElementById("edit-temps-passe").value),
-        "honoraires cpta": parseNum(document.getElementById("edit-honos").value),
-        "resultat R": parseNum(document.getElementById("edit-resultat").value),
-        "ancienneté": parseNum(document.getElementById("edit-anciennete").value)
-    };
-
-    const temps = parseNum(draft["temps passé"]);
-    const honos = parseNum(draft["honoraires cpta"]);
-    const ca = parseNum(draft["CA R"]);
-    const resultat = parseNum(draft["resultat R"]);
-    const anciennete = parseNum(draft["ancienneté"]);
-
-    const p1 = Math.min((temps > 0 ? honos / temps : 0) / 100, 1) * 40;
-    const p2 = Math.min((ca + resultat) / 100000, 1) * 30;
-    const bonusAnc = anciennete > 10 ? 10 : (anciennete > 5 ? 5 : (anciennete < 1 ? -10 : 0));
-    const malusRes = resultat < 0 ? 15 : 0;
-    const p3 = 30 + bonusAnc - malusRes;
-    const total = Math.round(p1 + p2 + p3);
-
-    document.getElementById("edit-renta-info").textContent =
-`Caractéristiques :
-- Temps passé : ${temps}
-- Honoraires cpta : ${honos} €
-- CA R : ${ca} €
-- Résultat R : ${resultat} €
-- Ancienneté : ${anciennete} ans
-
-Calcul du rendement :
-1) MIN(IF(temps > 0, honos/temps, 0)/100, 1) * 40 = ${p1.toFixed(2)}
-2) MIN((CA R + resultat R)/100000, 1) * 30 = ${p2.toFixed(2)}
-3) 30 + bonus ancienneté (${bonusAnc}) - malus résultat (${malusRes}) = ${p3.toFixed(2)}
-
-Total = ROUND(1 + 2 + 3, 0) = ${total}/100`;
-}
-
-function openRentaEditor(id) {
-    const client = clientsData.find(c => String(c.id) === String(id));
-    if (!client) return;
-
-    editingClientId = id;
-    document.getElementById("edit-renta-title").textContent = `Modifier rendement - ${client["nom client"] || ""}`;
-
-    document.getElementById("edit-temps-passe").value = parseNum(client["temps passé"]);
-    document.getElementById("edit-honos").value = parseNum(client["honoraires cpta"]);
-    document.getElementById("edit-resultat").value = parseNum(client["resultat R"]);
-    document.getElementById("edit-anciennete").value = parseNum(client["ancienneté"]);
-
-    refreshRentaInfo();
-    document.getElementById("edit-renta-dialog").showModal();
-}
-
-function closeRentaModal() {
-    document.getElementById("edit-renta-dialog").close();
-    editingClientId = null;
-}
-
-// Appel "comme dividendes": via helper utils.js updateField()
-async function saveRentaEdit() {
-    const client = clientsData.find(c => String(c.id) === String(editingClientId));
-    if (!client) return;
-
-    const newTemps = parseNum(document.getElementById("edit-temps-passe").value);
-    const newHonos = parseNum(document.getElementById("edit-honos").value);
-    const newResultat = parseNum(document.getElementById("edit-resultat").value);
-    const newAnciennete = parseNum(document.getElementById("edit-anciennete").value);
-
-    const patch = {
-        "temps passé": newTemps,
-        "honoraires cpta": newHonos,
-        "resultat R": newResultat,
-        "ancienneté": newAnciennete
-    };
-    patch["rentabilite"] = calculateRendement({ ...client, ...patch });
-
-    try {
-        // Même logique que dividendes.html: update champ par champ via utils.js
-        await updateField(client.id, "temps passé", patch["temps passé"]);
-        await updateField(client.id, "honoraires cpta", patch["honoraires cpta"]);
-        await updateField(client.id, "resultat R", patch["resultat R"]);
-        await updateField(client.id, "ancienneté", patch["ancienneté"]);
-        await updateField(client.id, "rentabilite", patch["rentabilite"]);
-
-        Object.assign(client, patch);
-        closeRentaModal();
-        displayClients(clientsData);
-        alert("✅ Modifications enregistrées.");
-    } catch (e) {
-        console.error(e);
-        alert("❌ Erreur de sauvegarde : " + (e.message || e));
-    }
-}
-
-/* ===== EXISTANT ===== */
+/* 🔥 EXISTANT */
 function checkAnniversaires(data) {
     const today = new Date();
     const j = String(today.getDate()).padStart(2, '0');
@@ -455,10 +266,12 @@ function checkAnniversaires(data) {
     if (annivs.length > 0) {
         const div = document.getElementById("alert-anniv");
         div.style.display = "block";
-        div.innerHTML = "🎂 Anniversaire aujourd’hui : " + annivs.map(a => a["nom client"]).join(", ");
+        div.innerHTML = "🎂 Anniversaire aujourd’hui : " +
+            annivs.map(a => a["nom client"]).join(", ");
     }
 }
 
+/* 🔥 FILTRES (inchangé) */
 let filtersConfig = [
     { field: "collaborateur", label: "Collaborateur" },
     { field: "structure", label: "Structure" },
@@ -507,7 +320,9 @@ function renderCheckboxList(field, values) {
         `;
     });
 
-    container.querySelectorAll("input").forEach(cb => cb.addEventListener("change", applyFilters));
+    container.querySelectorAll("input").forEach(cb => {
+        cb.addEventListener("change", applyFilters);
+    });
 }
 
 function applyFilters() {
@@ -528,16 +343,9 @@ function applyFilters() {
     displayClients(filtered);
 }
 
+/* 🔥 LOAD */
 async function loadClients() {
     clientsData = await fetchClients();
-    dataGlobal = clientsData; // variable globale venant de utils.js
-
-    clientsData = clientsData.map(c => {
-        if (c["rentabilite"] === undefined || c["rentabilite"] === null || c["rentabilite"] === "") {
-            c["rentabilite"] = calculateRendement(c);
-        }
-        return c;
-    });
 
     buildFilters();
     displayClients(clientsData);
@@ -545,71 +353,79 @@ async function loadClients() {
 }
 
 function displayClients(data) {
+
     updateDashboard(data);
 
     const table = document.getElementById("clients-table");
     table.innerHTML = "";
 
     if (!data.length) {
-        table.innerHTML = "<tr><td colspan='14'>Aucun résultat</td></tr>";
+        table.innerHTML = "<tr><td colspan='13'>Aucun résultat</td></tr>";
         return;
     }
 
     data.forEach(c => {
+
         const anciennete = parseFloat(c["ancienneté"]) || 0;
-        const score = parseNum(c["rentabilite"]);
+        const score = getRentabiliteScore(c["rentabilite"]);
 
         table.innerHTML += `
-        <tr onclick="viewClient('${esc(c.id)}')">
-            <td>${esc(c["code client"] || "")}</td>
-            <td><strong>${esc(c["nom client"] || "")}</strong></td>
-            <td>${esc(c["date de cloture"] || "")}</td>
-            <td>${esc(c["structure"] || "")}</td>
+        <tr onclick="viewClient('${c.id}')">
+
+            <td>${c["code client"] || ""}</td>
+            <td><strong>${c["nom client"] || ""}</strong></td>
+            <td>${c["date de cloture"] || ""}</td>
+            <td>${c["structure"] || ""}</td>
 
             <td>
                 ${anciennete}
                 ${anciennete < 1 ? '<span class="alert">⚠️</span><span class="alert-badge">Nouveau</span>' : ''}
             </td>
 
-            <td>${esc(c["temps passé"] || "")}</td>
-            <td>${esc(c["honoraires cpta"] || "")}</td>
-            <td>${esc(c["collaborateur"] || "")}</td>
-            <td>${esc(c["assistant"] || "")}</td>
+            <td>${c["honoraires cpta"] || ""}</td>
+            <td>${c["collaborateur"] || ""}</td>
+            <td>${c["assistant"] || ""}</td>
 
-            <td>${esc(c["CA R"] || "")}</td>
-            <td>${esc(c["resultat R"] || "")}</td>
-            <td>${esc(c["activite R"] || "")}</td>
+            <td>${c["CA R"] || ""}</td>
+            <td>${c["resultat R"] || ""}</td>
+            <td>${c["activite R"] || ""}</td>
 
-            <td>
-                <button class="renta-click"
-                    style="color:${getColor(score)};"
-                    onclick="event.stopPropagation(); openRentaEditor('${esc(c.id)}')">
-                    ${score}/100
-                </button>
+            <td style="font-weight:bold; color:${getColor(score)};">
+                ${score.toFixed(1)}/10
             </td>
 
             <td>
-                <button class="btn" onclick="event.stopPropagation(); viewClient('${esc(c.id)}')">
+                <button class="btn" onclick="event.stopPropagation(); viewClient('${c.id}')">
                     Voir
                 </button>
             </td>
+
         </tr>`;
     });
 }
 
+/* 🔥 TRI */
 function sortByRentabilite() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseNum(b["rentabilite"]) || 0) - (parseNum(a["rentabilite"]) || 0)
+        (parseFloat(b["rentabilite"]) || 0) -
+        (parseFloat(a["rentabilite"]) || 0)
     );
     displayClients(sorted);
 }
 
+/* 🔥 FILTRE RENTABILITE */
 document.getElementById("filter-renta").addEventListener("input", function(e) {
     const min = parseFloat(e.target.value) || 0;
-    const filtered = clientsData.filter(c => (parseNum(c["rentabilite"]) || 0) >= min);
+
+    const filtered = clientsData.filter(c => {
+        const score = getRentabiliteScore(c["rentabilite"]);
+        return score >= min;
+    });
+
     displayClients(filtered);
 });
 
+/* 🔎 SEARCH */
 document.getElementById("search").addEventListener("input", function(e) {
     const value = e.target.value.toLowerCase();
 
@@ -622,21 +438,24 @@ document.getElementById("search").addEventListener("input", function(e) {
 
 function sortByHonos() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseNum(b["honoraires cpta"]) || 0) - (parseNum(a["honoraires cpta"]) || 0)
+        (parseFloat(b["honoraires cpta"]) || 0) -
+        (parseFloat(a["honoraires cpta"]) || 0)
     );
     displayClients(sorted);
 }
 
 function sortByCA() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseNum(b["CA R"]) || 0) - (parseNum(a["CA R"]) || 0)
+        (parseFloat(b["CA R"]) || 0) -
+        (parseFloat(a["CA R"]) || 0)
     );
     displayClients(sorted);
 }
 
 function sortByResultat() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseNum(b["resultat R"]) || 0) - (parseNum(a["resultat R"]) || 0)
+        (parseFloat(b["resultat R"]) || 0) -
+        (parseFloat(a["resultat R"]) || 0)
     );
     displayClients(sorted);
 }
@@ -649,7 +468,7 @@ function updateDashboard(data) {
     const total = data.length;
 
     const totalHonos = data.reduce((sum, c) => {
-        return sum + (parseNum(c["honoraires cpta"]) || 0);
+        return sum + (parseFloat(c["honoraires cpta"]) || 0);
     }, 0);
 
     const avg = total ? totalHonos / total : 0;
@@ -661,11 +480,6 @@ function updateDashboard(data) {
             currency: 'EUR'
         }).format(avg);
 }
-
-["edit-temps-passe", "edit-honos", "edit-resultat", "edit-anciennete"].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.addEventListener("input", refreshRentaInfo);
-});
 
 loadClients();
 </script>
