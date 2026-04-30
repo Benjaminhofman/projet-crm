@@ -176,6 +176,10 @@ tr:hover {
         <a href="opportunites.html" class="btn" style="background:#2980b9;">🎯 Suivi opportunités</a>
         <a href="commercial.html" class="btn" style="background:#16a085;">💰 Suivi commercial</a>
         <a href="anniversaires.html" class="btn-anniv">🎂 Anniversaires</a>
+        <a href="missions.html" class="btn" style="background:#8e44ad;">🚀 Missions exceptionnelles</a>
+        <a href="#" class="btn" style="background:#c0392b;" onclick="openRendementForm()">
+        📊 Rendement
+        </a>
 
         <input type="text" id="search" placeholder="🔍 Rechercher un client...">
         <input type="number" id="filter-renta" placeholder="Min /10" style="width:120px;">
@@ -370,7 +374,7 @@ function displayClients(data) {
         const score = getRentabiliteScore(c["rentabilite"]);
 
         table.innerHTML += `
-        <tr onclick="viewClient('${c.id}')">
+        <tr onclick="openRendementForm(clientsData.find(x => x.id === '${c.id}'))">
 
             <td>${c["code client"] || ""}</td>
             <td><strong>${c["nom client"] || ""}</strong></td>
@@ -480,9 +484,71 @@ function updateDashboard(data) {
             currency: 'EUR'
         }).format(avg);
 }
+function openRendementForm(client = null) {
+    document.getElementById("rendement-modal").style.display = "block";
 
+    if (client) {
+        document.getElementById("r-code").value = client["code client"] || "";
+        document.getElementById("r-nom").value = client["nom client"] || "";
+        document.getElementById("r-assistant").value = client["assistant"] || "";
+        document.getElementById("r-collab").value = client["collaborateur"] || "";
+        document.getElementById("r-cloture").value = client["date de cloture"] || "";
+        document.getElementById("r-temps").value = client["temps passé"] || "";
+        document.getElementById("r-hono").value = client["honoraires cpta"] || "";
+        document.getElementById("r-resultat").value = client["resultat R"] || "";
+        document.getElementById("r-anciennete").value = client["ancienneté"] || "";
+    }
+}
+
+function closeRendementForm() {
+    document.getElementById("rendement-modal").style.display = "none";
+}
+
+async function saveRendement() {
+
+    const data = {
+        code: document.getElementById("r-code").value,
+        nom: document.getElementById("r-nom").value,
+        assistant: document.getElementById("r-assistant").value,
+        collaborateur: document.getElementById("r-collab").value,
+        annee: document.getElementById("r-annee").value,
+        cloture: document.getElementById("r-cloture").value,
+        temps_passe: document.getElementById("r-temps").value,
+        honoraires: document.getElementById("r-hono").value,
+        resultat: document.getElementById("r-resultat").value,
+        anciennete: document.getElementById("r-anciennete").value
+    };
+
+    await updateAirtable(data); // 👉 voir étape suivante
+
+    alert("✅ Données enregistrées !");
+    closeRendementForm();
+    loadClients();
+}
 loadClients();
 </script>
+<div id="rendement-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5);">
+    
+    <div style="background:white; width:500px; margin:80px auto; padding:20px; border-radius:10px;">
+        
+        <h3>📊 Saisie Rendement</h3>
 
+        <input id="r-code" placeholder="Code"><br><br>
+        <input id="r-nom" placeholder="Nom"><br><br>
+        <input id="r-assistant" placeholder="Assistant"><br><br>
+        <input id="r-collab" placeholder="Collaborateur"><br><br>
+        <input id="r-annee" placeholder="Année"><br><br>
+        <input id="r-cloture" placeholder="Clôture"><br><br>
+
+        <input id="r-temps" placeholder="Temps passé"><br><br>
+        <input id="r-hono" placeholder="Honoraires cpta"><br><br>
+        <input id="r-resultat" placeholder="Résultat R"><br><br>
+        <input id="r-anciennete" placeholder="Ancienneté"><br><br>
+
+        <button class="btn" onclick="saveRendement()">💾 Enregistrer</button>
+        <button class="btn" style="background:#7f8c8d;" onclick="closeRendementForm()">Fermer</button>
+
+    </div>
+</div>
 </body>
 </html>
