@@ -1,5 +1,10 @@
 const API_URL = "https://projet-crm-m0o3.onrender.com";
 
+async function fetchClients() {
+    const res = await fetch(API_URL + "/clients");
+    return res.json();
+}
+
 function formatDate(dateStr) {
     if (!dateStr) return "";
     return dateStr.substring(0, 10);

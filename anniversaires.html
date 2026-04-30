@@ -53,8 +53,7 @@ body {
 
 async function loadCalendar() {
 
-    const res = await fetch(API_URL + "/clients");
-    const data = await res.json();
+    const data = await fetchClients();
 
     const currentYear = new Date().getFullYear(); // 🔥 dynamique
 

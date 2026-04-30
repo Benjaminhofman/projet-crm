@@ -225,8 +225,7 @@ function applyFilters() {
 // load
 async function load() {
 
-    const res = await fetch(API_URL + "/clients");
-    const data = await res.json();
+    const data = await fetchClients();
 
     dataGlobal = data.filter(c => c["liasse"] === true);
 

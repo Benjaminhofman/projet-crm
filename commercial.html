@@ -246,8 +246,7 @@ function applyFilters() {
 async function load() {
     initSelectFilters();
 
-    const res = await fetch(API_URL + "/clients");
-    dataGlobal = await res.json();
+    dataGlobal = await fetchClients();
 
     applyFilters();
 

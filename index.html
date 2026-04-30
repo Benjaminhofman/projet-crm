@@ -345,8 +345,7 @@ function applyFilters() {
 
 /* 🔥 LOAD */
 async function loadClients() {
-    const res = await fetch(API_URL + "/clients");
-    clientsData = await res.json();
+    clientsData = await fetchClients();
 
     buildFilters();
     displayClients(clientsData);

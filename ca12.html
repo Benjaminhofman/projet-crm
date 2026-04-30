@@ -207,8 +207,7 @@ function applyFilters() {
 // 🔥 load
 async function load() {
 
-    const res = await fetch(API_URL + "/clients");
-    const data = await res.json();
+    const data = await fetchClients();
 
     // filtre CA12 uniquement
     dataGlobal = data.filter(c => c["CA12"] === true);
