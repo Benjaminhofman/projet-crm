@@ -103,7 +103,6 @@ input {
 <th>Temps</th>
 <th>Honoraires</th>
 <th>€/h</th>
-<th>€/h</th>
 <th>Rendement</th>
 </tr>
 </thead>
@@ -120,9 +119,10 @@ let dataGlobal;
 
 /* LOAD DATA */
 async function load() {
-
     const res = await fetch(API_URL + "/clients");
     const data = await res.json();
+
+    console.log("DATA:", data); // debug
 
     dataGlobal = data;
 
@@ -130,7 +130,14 @@ async function load() {
     bindFilters();
 }
 
-/* CALCUL */
+/* COULEUR RENDEMENT */
+function getColor(val) {
+    if (val < 50) return "#e74c3c";
+    if (val < 80) return "#f39c12";
+    return "#27ae60";
+}
+
+/* CALCUL €/h */
 function calculerLigne(row) {
 
     const temps = parseFloat(row.querySelector(".temps").value) || 0;
@@ -162,6 +169,8 @@ function display(data) {
 
         const tr = document.createElement("tr");
 
+        const rendement = parseFloat(c["rentabilite"] ?? 0);
+
         tr.innerHTML = `
         <td>${c["code client"] || ""}</td>
         <td><b>${c["nom client"] || ""}</b></td>
@@ -174,17 +183,17 @@ function display(data) {
         <td>${c["ancienneté"] || ""}</td>
 
         <td>
-            <input class="temps" value="${c["temps passé"] || ""}">
+            <input class="temps" value="${c["temps passé"] ?? ""}">
         </td>
 
         <td>
-            <input class="honos" value="${c["honoraires cpta"] || ""}">
+            <input class="honos" value="${c["honoraires cpta"] ?? ""}">
         </td>
 
         <td class="result">-</td>
 
-        <td class="rendement-airtable" style="font-weight:bold;">
-            ${c["rentabilite"] || ""}
+        <td style="font-weight:bold; color:${getColor(rendement)};">
+            ${rendement ? rendement.toFixed(2) : ""}
         </td>
         `;
 
