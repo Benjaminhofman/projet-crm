@@ -3,114 +3,299 @@
 <head>
 <meta charset="UTF-8">
 <title>CRM Clients</title>
+
 <style>
-body { font-family: 'Segoe UI', sans-serif; background: #f4f6fb; margin: 0; }
-.header { background: #273c75; color: white; padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; }
-.header input { padding: 8px; border-radius: 6px; border: none; width: 250px; }
-.container { padding: 20px; }
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6fb;
+    margin: 0;
+}
+
+.header {
+    background: #273c75;
+    color: white;
+    padding: 15px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header input {
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    width: 250px;
+}
+
+.container {
+    padding: 20px;
+}
 
 #alert-anniv {
-    display:none; background:#ffeaa7; border-left:6px solid #e17055;
-    padding:10px; margin-bottom:15px; border-radius:6px; font-weight:bold;
+    display:none;
+    background:#ffeaa7;
+    border-left:6px solid #e17055;
+    padding:10px;
+    margin-bottom:15px;
+    border-radius:6px;
+    font-weight:bold;
 }
 
-.dashboard { display: flex; gap: 20px; margin-bottom: 20px; }
-.card { background: white; padding: 15px; border-radius: 10px; min-width: 180px; text-align: center; }
+.dashboard {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
 
-.filters-container { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 20px; }
-.filter-group { background: white; padding: 10px; border-radius: 8px; }
+.card {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    min-width: 180px;
+    text-align: center;
+}
 
-.checkbox-list { height: 120px; overflow-y: auto; background: #f1f2f6; padding: 5px; border-radius: 5px; }
-.checkbox-list label { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 4px; }
+.filters-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
 
-.arrow { margin-left: 5px; font-size: 12px; }
+.filter-group {
+    background: white;
+    padding: 10px;
+    border-radius: 8px;
+}
 
-.btn-anniv { background: #e67e22; color: white; padding: 8px 12px; border-radius: 8px; text-decoration: none; font-weight: bold; transition: 0.2s; }
-.btn-anniv:hover { background: #d35400; }
+.checkbox-list {
+    height: 120px;
+    overflow-y: auto;
+    background: #f1f2f6;
+    padding: 5px;
+    border-radius: 5px;
+}
 
-table { border-collapse: collapse; width: 100%; background: white; }
-th { background: #273c75; color: white; padding: 10px; cursor: pointer; }
-td { padding: 10px; }
-tr:nth-child(even) { background: #f8f9fc; }
-tr:hover { background: #e8f0fe; cursor: pointer; }
+.checkbox-list label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    padding: 4px;
+}
 
-.btn { background: #44bd32; border: none; padding: 6px 10px; color: white; border-radius: 6px; cursor: pointer; }
-.btn:hover { background: #2ecc71; }
+.arrow {
+    margin-left: 5px;
+    font-size: 12px;
+}
 
-.alert { color: #e74c3c; font-weight: bold; margin-left: 5px; }
-.alert-badge { background: #ffeaea; color: #e74c3c; padding: 2px 6px; border-radius: 6px; font-size: 11px; margin-left: 5px; }
+.btn-anniv {
+    background: #e67e22;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: 0.2s;
+}
 
+.btn-anniv:hover {
+    background: #d35400;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    background: white;
+}
+
+th {
+    background: #273c75;
+    color: white;
+    padding: 10px;
+    cursor: pointer;
+}
+
+td {
+    padding: 10px;
+}
+
+tr:nth-child(even) {
+    background: #f8f9fc;
+}
+
+tr:hover {
+    background: #e8f0fe;
+    cursor: pointer;
+}
+
+.btn {
+    background: #44bd32;
+    border: none;
+    padding: 6px 10px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn:hover {
+    background: #2ecc71;
+}
+
+.alert {
+    color: #e74c3c;
+    font-weight: bold;
+    margin-left: 5px;
+}
+
+.alert-badge {
+    background: #ffeaea;
+    color: #e74c3c;
+    padding: 2px 6px;
+    border-radius: 6px;
+    font-size: 11px;
+    margin-left: 5px;
+}
+
+/* Modale rendement */
 .renta-click {
-    background: none; border: none; padding: 0; font: inherit;
-    font-weight: bold; cursor: pointer; text-decoration: underline;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
 }
-dialog { border: none; border-radius: 10px; width: min(760px, 95vw); padding: 20px; }
-.modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
-.modal-grid label { display: flex; flex-direction: column; gap: 6px; font-size: 14px; }
-.modal-grid input { padding: 8px; border: 1px solid #dcdde1; border-radius: 6px; }
+
+dialog {
+    border: none;
+    border-radius: 10px;
+    width: min(760px, 95vw);
+    padding: 20px;
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.modal-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.modal-grid input {
+    padding: 8px;
+    border: 1px solid #dcdde1;
+    border-radius: 6px;
+}
+
 .calc-box {
-    background: #f1f7ff; border: 1px solid #cfe3ff; border-radius: 8px;
-    padding: 10px; margin: 12px 0; white-space: pre-line; font-size: 14px;
+    background: #f1f7ff;
+    border: 1px solid #cfe3ff;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 12px 0;
+    white-space: pre-line;
+    font-size: 14px;
 }
-.modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 </style>
 </head>
 
 <body>
+
 <div class="header">
     <h2>📊 CRM Clients</h2>
+
     <div style="display:flex; gap:10px; align-items:center;">
         <a href="declaratif.html" class="btn" style="background:#e67e22;">📑 Déclaratif</a>
         <a href="missions.html" class="btn" style="background:#8e44ad;">🚀 Missions exceptionnelles</a>
         <a href="opportunites.html" class="btn" style="background:#2980b9;">🎯 Suivi opportunités</a>
         <a href="commercial.html" class="btn" style="background:#16a085;">💰 Suivi commercial</a>
         <a href="anniversaires.html" class="btn-anniv">🎂 Anniversaires</a>
+
         <input type="text" id="search" placeholder="🔍 Rechercher un client...">
         <input type="number" id="filter-renta" placeholder="Min /100" style="width:120px;">
     </div>
 </div>
 
 <div class="container">
-    <div id="alert-anniv"></div>
 
-    <div class="dashboard">
-        <div class="card"><h4>👥 Clients</h4><p id="total-clients">0</p></div>
-        <div class="card"><h4>💰 Honos moyen</h4><p id="avg-honos">0 €</p></div>
-        <div class="card"><button class="btn" onclick="sortByHonos()">📊 Top honoraires</button></div>
+<div id="alert-anniv"></div>
+
+<div class="dashboard">
+    <div class="card">
+        <h4>👥 Clients</h4>
+        <p id="total-clients">0</p>
     </div>
 
-    <div class="filters-container" id="filters"></div>
+    <div class="card">
+        <h4>💰 Honos moyen</h4>
+        <p id="avg-honos">0 €</p>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Code</th>
-                <th>Nom</th>
-                <th>Clôture</th>
-                <th>Structure</th>
-                <th>Ancienneté</th>
-                <th>Temps passé</th>
-                <th>Honos</th>
-                <th>Collab</th>
-                <th>Assistant</th>
-                <th onclick="sortByCA()">CA 🔽</th>
-                <th onclick="sortByResultat()">Résultat 🔽</th>
-                <th>Activité</th>
-                <th onclick="sortByRentabilite()">Rentabilité 🔽</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-        <tbody id="clients-table"></tbody>
-    </table>
+    <div class="card">
+        <button class="btn" onclick="sortByHonos()">📊 Top honoraires</button>
+    </div>
+</div>
+
+<div class="filters-container" id="filters"></div>
+
+<table>
+<thead>
+<tr>
+<th>Code</th>
+<th>Nom</th>
+<th>Clôture</th>
+<th>Structure</th>
+<th>Ancienneté</th>
+<th>Temps passé</th>
+<th>Honos</th>
+<th>Collab</th>
+<th>Assistant</th>
+<th onclick="sortByCA()">CA 🔽</th>
+<th onclick="sortByResultat()">Résultat 🔽</th>
+<th>Activité</th>
+<th onclick="sortByRentabilite()">Rentabilité 🔽</th>
+<th>Action</th>
+</tr>
+</thead>
+
+<tbody id="clients-table"></tbody>
+</table>
+
 </div>
 
 <dialog id="edit-renta-dialog">
     <h3 id="edit-renta-title">Modifier rendement</h3>
+
     <div class="modal-grid">
-        <label>Temps passé (h)<input id="edit-temps-passe" type="number" min="0" step="0.01"></label>
-        <label>Honoraires cpta (€)<input id="edit-honos" type="number" step="0.01"></label>
-        <label>Résultat R (€)<input id="edit-resultat" type="number" step="0.01"></label>
-        <label>Ancienneté (ans)<input id="edit-anciennete" type="number" min="0" step="0.01"></label>
+        <label>Temps passé (h)
+            <input id="edit-temps-passe" type="number" min="0" step="0.01">
+        </label>
+
+        <label>Honoraires cpta (€)
+            <input id="edit-honos" type="number" step="0.01">
+        </label>
+
+        <label>Résultat R (€)
+            <input id="edit-resultat" type="number" step="0.01">
+        </label>
+
+        <label>Ancienneté (ans)
+            <input id="edit-anciennete" type="number" min="0" step="0.01">
+        </label>
     </div>
 
     <div id="edit-renta-info" class="calc-box"></div>
@@ -124,22 +309,17 @@ dialog { border: none; border-radius: 10px; width: min(760px, 95vw); padding: 20
 <script src="utils.js"></script>
 <script>
 let clientsData = [];
+let dataGlobal = [];
 let editingClientId = null;
 
-/* ========= API CONFIG (style dividendes) =========
-   Mets ici la même route que dividendes.html
-*/
-const API_UPDATE_URL = (id) => `/api/clients/${id}`; 
-// Exemples alternatifs selon ton backend:
-// const API_UPDATE_URL = (id) => `/api/update-client/${id}`;
-// const API_UPDATE_URL = (id) => `/api/airtable/client/${id}`;
-
+/* ===== Helpers ===== */
 function parseNum(v) {
     if (v === null || v === undefined || v === "") return 0;
     const n = parseFloat(String(v).replace(",", "."));
     return isNaN(n) ? 0 : n;
 }
 
+// Calcul demandé
 function calculateRendement(row) {
     const temps = parseNum(row["temps passé"]);
     const honos = parseNum(row["honoraires cpta"]);
@@ -149,6 +329,7 @@ function calculateRendement(row) {
 
     const p1 = Math.min((temps > 0 ? honos / temps : 0) / 100, 1) * 40;
     const p2 = Math.min((ca + resultat) / 100000, 1) * 30;
+
     const bonusAnc = anciennete > 10 ? 10 : (anciennete > 5 ? 5 : (anciennete < 1 ? -10 : 0));
     const malusRes = resultat < 0 ? 15 : 0;
     const p3 = 30 + bonusAnc - malusRes;
@@ -164,6 +345,7 @@ function getColor(score) {
 
 function refreshRentaInfo() {
     const client = clientsData.find(c => String(c.id) === String(editingClientId)) || {};
+
     const draft = {
         ...client,
         "temps passé": parseNum(document.getElementById("edit-temps-passe").value),
@@ -207,10 +389,12 @@ function openRentaEditor(id) {
 
     editingClientId = id;
     document.getElementById("edit-renta-title").textContent = `Modifier rendement - ${client["nom client"] || ""}`;
+
     document.getElementById("edit-temps-passe").value = parseNum(client["temps passé"]);
     document.getElementById("edit-honos").value = parseNum(client["honoraires cpta"]);
     document.getElementById("edit-resultat").value = parseNum(client["resultat R"]);
     document.getElementById("edit-anciennete").value = parseNum(client["ancienneté"]);
+
     refreshRentaInfo();
     document.getElementById("edit-renta-dialog").showModal();
 }
@@ -220,64 +404,43 @@ function closeRentaModal() {
     editingClientId = null;
 }
 
-/* Appel API robuste (inspiré pattern pages métier) */
-async function callUpdateAPI(url, payload) {
-    const methods = ["POST", "PATCH", "PUT"];
-    const bodies = [
-        payload,               // format direct
-        { fields: payload },   // format airtable-like proxy
-        { data: payload }      // format alternatif
-    ];
-
-    let lastErr = "Erreur inconnue";
-    for (const method of methods) {
-        for (const body of bodies) {
-            try {
-                const res = await fetch(url, {
-                    method,
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(body)
-                });
-                if (res.ok) {
-                    const ct = res.headers.get("content-type") || "";
-                    return ct.includes("application/json") ? await res.json() : await res.text();
-                }
-                const txt = await res.text();
-                lastErr = `${method} ${url} -> ${res.status} ${txt}`;
-                if (res.status === 405) continue; // essaie autre méthode
-            } catch (e) {
-                lastErr = `${method} ${url} -> ${e.message}`;
-            }
-        }
-    }
-    throw new Error(lastErr);
-}
-
+// Appel "comme dividendes": via helper utils.js updateField()
 async function saveRentaEdit() {
     const client = clientsData.find(c => String(c.id) === String(editingClientId));
     if (!client) return;
 
-    const patchFields = {
-        "temps passé": parseNum(document.getElementById("edit-temps-passe").value),
-        "honoraires cpta": parseNum(document.getElementById("edit-honos").value),
-        "resultat R": parseNum(document.getElementById("edit-resultat").value),
-        "ancienneté": parseNum(document.getElementById("edit-anciennete").value)
+    const newTemps = parseNum(document.getElementById("edit-temps-passe").value);
+    const newHonos = parseNum(document.getElementById("edit-honos").value);
+    const newResultat = parseNum(document.getElementById("edit-resultat").value);
+    const newAnciennete = parseNum(document.getElementById("edit-anciennete").value);
+
+    const patch = {
+        "temps passé": newTemps,
+        "honoraires cpta": newHonos,
+        "resultat R": newResultat,
+        "ancienneté": newAnciennete
     };
-    patchFields["rentabilite"] = calculateRendement({ ...client, ...patchFields });
+    patch["rentabilite"] = calculateRendement({ ...client, ...patch });
 
     try {
-        await callUpdateAPI(API_UPDATE_URL(client.id), patchFields);
-        Object.assign(client, patchFields);
+        // Même logique que dividendes.html: update champ par champ via utils.js
+        await updateField(client.id, "temps passé", patch["temps passé"]);
+        await updateField(client.id, "honoraires cpta", patch["honoraires cpta"]);
+        await updateField(client.id, "resultat R", patch["resultat R"]);
+        await updateField(client.id, "ancienneté", patch["ancienneté"]);
+        await updateField(client.id, "rentabilite", patch["rentabilite"]);
+
+        Object.assign(client, patch);
         closeRentaModal();
         displayClients(clientsData);
         alert("✅ Modifications enregistrées.");
     } catch (e) {
         console.error(e);
-        alert("❌ Erreur de sauvegarde : " + e.message);
+        alert("❌ Erreur de sauvegarde : " + (e.message || e));
     }
 }
 
-/* ==== EXISTANT ==== */
+/* ===== EXISTANT ===== */
 function checkAnniversaires(data) {
     const today = new Date();
     const j = String(today.getDate()).padStart(2, '0');
@@ -308,21 +471,26 @@ let filtersConfig = [
 function buildFilters() {
     const container = document.getElementById("filters");
     container.innerHTML = "";
+
     filtersConfig.forEach(f => {
         const values = [...new Set(clientsData.map(c => c[f.field]).filter(Boolean))].sort();
+
         const group = document.createElement("div");
         group.className = "filter-group";
+
         group.innerHTML = `
             <strong>${f.label}</strong>
             <input type="text" placeholder="Rechercher..." data-field="${f.field}">
             <div class="checkbox-list" id="list-${f.field}"></div>
         `;
+
         container.appendChild(group);
         renderCheckboxList(f.field, values);
 
         group.querySelector("input").addEventListener("input", (e) => {
             const val = e.target.value.toLowerCase();
-            renderCheckboxList(f.field, values.filter(v => v.toLowerCase().includes(val)));
+            const filtered = values.filter(v => v.toLowerCase().includes(val));
+            renderCheckboxList(f.field, filtered);
         });
     });
 }
@@ -330,18 +498,22 @@ function buildFilters() {
 function renderCheckboxList(field, values) {
     const container = document.getElementById("list-" + field);
     container.innerHTML = "";
+
     values.forEach(val => {
         container.innerHTML += `
             <label>
                 <input type="checkbox" value="${val}" data-field="${field}">
                 ${val}
-            </label>`;
+            </label>
+        `;
     });
+
     container.querySelectorAll("input").forEach(cb => cb.addEventListener("change", applyFilters));
 }
 
 function applyFilters() {
     const checkboxes = document.querySelectorAll("input[type=checkbox]:checked");
+
     const filters = {};
     checkboxes.forEach(cb => {
         if (!filters[cb.dataset.field]) filters[cb.dataset.field] = [];
@@ -349,13 +521,18 @@ function applyFilters() {
     });
 
     const filtered = clientsData.filter(c =>
-        Object.keys(filters).every(field => filters[field].includes(c[field]))
+        Object.keys(filters).every(field =>
+            filters[field].includes(c[field])
+        )
     );
+
     displayClients(filtered);
 }
 
 async function loadClients() {
     clientsData = await fetchClients();
+    dataGlobal = clientsData;
+
     clientsData = clientsData.map(c => {
         if (c["rentabilite"] === undefined || c["rentabilite"] === null || c["rentabilite"] === "") {
             c["rentabilite"] = calculateRendement(c);
@@ -370,6 +547,7 @@ async function loadClients() {
 
 function displayClients(data) {
     updateDashboard(data);
+
     const table = document.getElementById("clients-table");
     table.innerHTML = "";
 
@@ -383,67 +561,106 @@ function displayClients(data) {
         const score = parseNum(c["rentabilite"]);
 
         table.innerHTML += `
-        <tr onclick="viewClient('${c.id}')">
-            <td>${c["code client"] || ""}</td>
-            <td><strong>${c["nom client"] || ""}</strong></td>
-            <td>${c["date de cloture"] || ""}</td>
-            <td>${c["structure"] || ""}</td>
+        <tr onclick="viewClient('${esc(c.id)}')">
+            <td>${esc(c["code client"] || "")}</td>
+            <td><strong>${esc(c["nom client"] || "")}</strong></td>
+            <td>${esc(c["date de cloture"] || "")}</td>
+            <td>${esc(c["structure"] || "")}</td>
+
             <td>
                 ${anciennete}
                 ${anciennete < 1 ? '<span class="alert">⚠️</span><span class="alert-badge">Nouveau</span>' : ''}
             </td>
-            <td>${c["temps passé"] || ""}</td>
-            <td>${c["honoraires cpta"] || ""}</td>
-            <td>${c["collaborateur"] || ""}</td>
-            <td>${c["assistant"] || ""}</td>
-            <td>${c["CA R"] || ""}</td>
-            <td>${c["resultat R"] || ""}</td>
-            <td>${c["activite R"] || ""}</td>
+
+            <td>${esc(c["temps passé"] || "")}</td>
+            <td>${esc(c["honoraires cpta"] || "")}</td>
+            <td>${esc(c["collaborateur"] || "")}</td>
+            <td>${esc(c["assistant"] || "")}</td>
+
+            <td>${esc(c["CA R"] || "")}</td>
+            <td>${esc(c["resultat R"] || "")}</td>
+            <td>${esc(c["activite R"] || "")}</td>
+
             <td>
-                <button class="renta-click" style="color:${getColor(score)};"
-                        onclick="event.stopPropagation(); openRentaEditor('${c.id}')">
+                <button class="renta-click"
+                    style="color:${getColor(score)};"
+                    onclick="event.stopPropagation(); openRentaEditor('${esc(c.id)}')">
                     ${score}/100
                 </button>
             </td>
-            <td><button class="btn" onclick="event.stopPropagation(); viewClient('${c.id}')">Voir</button></td>
+
+            <td>
+                <button class="btn" onclick="event.stopPropagation(); viewClient('${esc(c.id)}')">
+                    Voir
+                </button>
+            </td>
         </tr>`;
     });
 }
 
 function sortByRentabilite() {
-    displayClients([...clientsData].sort((a, b) => parseNum(b["rentabilite"]) - parseNum(a["rentabilite"])));
-}
-function sortByHonos() {
-    displayClients([...clientsData].sort((a, b) => parseNum(b["honoraires cpta"]) - parseNum(a["honoraires cpta"])));
-}
-function sortByCA() {
-    displayClients([...clientsData].sort((a, b) => parseNum(b["CA R"]) - parseNum(a["CA R"])));
-}
-function sortByResultat() {
-    displayClients([...clientsData].sort((a, b) => parseNum(b["resultat R"]) - parseNum(a["resultat R"])));
+    const sorted = [...clientsData].sort((a, b) =>
+        (parseNum(b["rentabilite"]) || 0) - (parseNum(a["rentabilite"]) || 0)
+    );
+    displayClients(sorted);
 }
 
 document.getElementById("filter-renta").addEventListener("input", function(e) {
     const min = parseFloat(e.target.value) || 0;
-    displayClients(clientsData.filter(c => parseNum(c["rentabilite"]) >= min));
+    const filtered = clientsData.filter(c => (parseNum(c["rentabilite"]) || 0) >= min);
+    displayClients(filtered);
 });
 
 document.getElementById("search").addEventListener("input", function(e) {
     const value = e.target.value.toLowerCase();
-    displayClients(clientsData.filter(c => (c["nom client"] || "").toLowerCase().includes(value)));
+
+    const filtered = clientsData.filter(c =>
+        (c["nom client"] || "").toLowerCase().includes(value)
+    );
+
+    displayClients(filtered);
 });
 
-function viewClient(id) { window.location.href = "client.html?id=" + id; }
+function sortByHonos() {
+    const sorted = [...clientsData].sort((a, b) =>
+        (parseNum(b["honoraires cpta"]) || 0) - (parseNum(a["honoraires cpta"]) || 0)
+    );
+    displayClients(sorted);
+}
+
+function sortByCA() {
+    const sorted = [...clientsData].sort((a, b) =>
+        (parseNum(b["CA R"]) || 0) - (parseNum(a["CA R"]) || 0)
+    );
+    displayClients(sorted);
+}
+
+function sortByResultat() {
+    const sorted = [...clientsData].sort((a, b) =>
+        (parseNum(b["resultat R"]) || 0) - (parseNum(a["resultat R"]) || 0)
+    );
+    displayClients(sorted);
+}
+
+function viewClient(id) {
+    window.location.href = "client.html?id=" + id;
+}
 
 function updateDashboard(data) {
     const total = data.length;
-    const totalHonos = data.reduce((sum, c) => sum + parseNum(c["honoraires cpta"]), 0);
+
+    const totalHonos = data.reduce((sum, c) => {
+        return sum + (parseNum(c["honoraires cpta"]) || 0);
+    }, 0);
+
     const avg = total ? totalHonos / total : 0;
 
     document.getElementById("total-clients").innerText = total;
-    document.getElementById("avg-honos").innerText = new Intl.NumberFormat('fr-FR', {
-        style: 'currency', currency: 'EUR'
-    }).format(avg);
+    document.getElementById("avg-honos").innerText =
+        new Intl.NumberFormat('fr-FR', {
+            style: 'currency',
+            currency: 'EUR'
+        }).format(avg);
 }
 
 ["edit-temps-passe", "edit-honos", "edit-resultat", "edit-anciennete"].forEach(id => {
@@ -453,5 +670,6 @@ function updateDashboard(data) {
 
 loadClients();
 </script>
+
 </body>
 </html>
