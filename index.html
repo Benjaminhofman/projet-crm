@@ -162,6 +162,60 @@ tr:hover {
     font-size: 11px;
     margin-left: 5px;
 }
+
+/* --- AJOUT : modal édition rentabilité --- */
+.renta-click {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+dialog {
+    border: none;
+    border-radius: 10px;
+    width: min(720px, 95vw);
+    padding: 20px;
+}
+
+.modal-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.modal-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.modal-grid input {
+    padding: 8px;
+    border: 1px solid #dcdde1;
+    border-radius: 6px;
+}
+
+.calc-box {
+    background: #f1f7ff;
+    border: 1px solid #cfe3ff;
+    border-radius: 8px;
+    padding: 10px;
+    margin: 12px 0;
+    white-space: pre-line;
+    font-size: 14px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
 </style>
 </head>
 
@@ -234,9 +288,40 @@ tr:hover {
 
 </div>
 
+<!-- AJOUT : modale édition -->
+<dialog id="edit-renta-dialog">
+    <h3 id="edit-renta-title">Modifier le rendement</h3>
+
+    <div class="modal-grid">
+        <label>Temps passé (h)
+            <input id="edit-temps-passe" type="number" min="0" step="0.1">
+        </label>
+
+        <label>Honoraires cpta (€)
+            <input id="edit-honos" type="number" step="0.01">
+        </label>
+
+        <label>Résultat R (€)
+            <input id="edit-resultat" type="number" step="0.01">
+        </label>
+
+        <label>Ancienneté (ans)
+            <input id="edit-anciennete" type="number" min="0" step="0.1">
+        </label>
+    </div>
+
+    <div id="edit-renta-info" class="calc-box"></div>
+
+    <div class="modal-actions">
+        <button class="btn" style="background:#7f8c8d" onclick="closeRentaModal()">Annuler</button>
+        <button class="btn" onclick="saveRentaEdit()">Enregistrer</button>
+    </div>
+</dialog>
+
 <script src="utils.js"></script>
 <script>
 let clientsData = [];
+let editingClientId = null;
 
 /* 🔥 RENTABILITE */
 function getRentabiliteScore(val) {
@@ -249,6 +334,91 @@ function getColor(score) {
     if (score < 7) return "#f39c12";
     return "#27ae60";
 }
+
+/* 🔥 Outils calcul rendement */
+function parseNum(v) {
+    if (v === null || v === undefined || v === "") return 0;
+    const n = parseFloat(String(v).replace(",", "."));
+    return isNaN(n) ? 0 : n;
+}
+
+function calcRendement(temps, honos, resultat, anciennete) {
+    if (temps <= 0) return 0;
+    return ((honos + resultat) / temps) * (1 + anciennete * 0.02);
+}
+
+function refreshRentaInfo() {
+    const temps = parseNum(document.getElementById("edit-temps-passe").value);
+    const honos = parseNum(document.getElementById("edit-honos").value);
+    const resultat = parseNum(document.getElementById("edit-resultat").value);
+    const anciennete = parseNum(document.getElementById("edit-anciennete").value);
+
+    const rendement = calcRendement(temps, honos, resultat, anciennete);
+    const bonus = (1 + anciennete * 0.02).toFixed(2);
+
+    document.getElementById("edit-renta-info").textContent =
+`Caractéristiques :
+- Temps passé : ${temps} h
+- Honoraires cpta : ${honos.toFixed(2)} €
+- Résultat R : ${resultat.toFixed(2)} €
+- Ancienneté : ${anciennete} ans
+
+Calcul du rendement :
+((Honoraires cpta + Résultat R) / Temps passé) × (1 + Ancienneté × 2%)
+((${honos.toFixed(2)} + ${resultat.toFixed(2)}) / ${temps || 0}) × ${bonus}
+= ${rendement.toFixed(2)}`;
+}
+
+function openRentaEditor(id) {
+    const client = clientsData.find(c => String(c.id) === String(id));
+    if (!client) return;
+
+    editingClientId = id;
+
+    document.getElementById("edit-renta-title").textContent =
+        `Modifier rendement - ${client["nom client"] || "Client"}`;
+
+    document.getElementById("edit-temps-passe").value = parseNum(client["temps passé"]);
+    document.getElementById("edit-honos").value = parseNum(client["honoraires cpta"]);
+    document.getElementById("edit-resultat").value = parseNum(client["resultat R"]);
+    document.getElementById("edit-anciennete").value = parseNum(client["ancienneté"]);
+
+    refreshRentaInfo();
+    document.getElementById("edit-renta-dialog").showModal();
+}
+
+function closeRentaModal() {
+    document.getElementById("edit-renta-dialog").close();
+    editingClientId = null;
+}
+
+function saveRentaEdit() {
+    const client = clientsData.find(c => String(c.id) === String(editingClientId));
+    if (!client) return;
+
+    client["temps passé"] = parseNum(document.getElementById("edit-temps-passe").value);
+    client["honoraires cpta"] = parseNum(document.getElementById("edit-honos").value);
+    client["resultat R"] = parseNum(document.getElementById("edit-resultat").value);
+    client["ancienneté"] = parseNum(document.getElementById("edit-anciennete").value);
+
+    const rendement = calcRendement(
+        client["temps passé"],
+        client["honoraires cpta"],
+        client["resultat R"],
+        client["ancienneté"]
+    );
+
+    // Conservé pour compatibilité avec getRentabiliteScore
+    client["rentabilite"] = rendement;
+
+    closeRentaModal();
+    displayClients(clientsData);
+}
+
+["edit-temps-passe", "edit-honos", "edit-resultat", "edit-anciennete"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", refreshRentaInfo);
+});
 
 /* 🔥 EXISTANT */
 function checkAnniversaires(data) {
@@ -390,8 +560,14 @@ function displayClients(data) {
             <td>${c["resultat R"] || ""}</td>
             <td>${c["activite R"] || ""}</td>
 
-            <td style="font-weight:bold; color:${getColor(score)};">
-                ${score.toFixed(1)}/10
+            <td>
+                <button
+                    class="renta-click"
+                    style="color:${getColor(score)};"
+                    onclick="event.stopPropagation(); openRentaEditor('${c.id}')"
+                >
+                    ${score.toFixed(1)}/10
+                </button>
             </td>
 
             <td>
