@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Rendement Client</title>
+
+<style>
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6fb;
+    margin: 0;
+}
+
+.header {
+    background: #c0392b;
+    color: white;
+    padding: 15px 25px;
+}
+
+.container {
+    padding: 20px;
+    max-width: 900px;
+    margin: auto;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+}
+
+label {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+input {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.row {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.separator {
+    margin: 25px 0;
+    border-top: 2px solid #ddd;
+}
+
+.btn {
+    background: #27ae60;
+    border: none;
+    padding: 10px;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    width: 220px;
+}
+
+.btn:hover {
+    background: #2ecc71;
+}
+
+.result {
+    margin-top: 20px;
+    font-size: 20px;
+    font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h2>📈 Analyse de Rendement</h2>
+</div>
+
+<div class="container">
+
+    <div class="row">
+        <div class="form-group">
+            <label>Code</label>
+            <input type="text" id="code" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>Nom</label>
+            <input type="text" id="nom" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>Assistant</label>
+            <input type="text" id="assistant" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>Collaborateur</label>
+            <input type="text" id="collaborateur" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>Année</label>
+            <input type="number" id="annee">
+        </div>
+
+        <div class="form-group">
+            <label>Clôture</label>
+            <input type="text" id="cloture" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>CA R</label>
+            <input type="number" id="ca" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>Résultat R</label>
+            <input type="number" id="resultat" disabled>
+        </div>
+
+        <div class="form-group">
+            <label>Ancienneté</label>
+            <input type="number" id="anciennete" disabled>
+        </div>
+    </div>
+
+    <div class="separator"></div>
+
+    <div class="row">
+        <div class="form-group">
+            <label>Temps passé (heures)</label>
+            <input type="number" id="temps">
+        </div>
+
+        <div class="form-group">
+            <label>Honoraires comptables (€)</label>
+            <input type="number" id="honos">
+        </div>
+    </div>
+
+    <br>
+
+    <button class="btn" onclick="calculer()">Calculer rendement</button>
+
+    <div class="result" id="resultat-affiche"></div>
+
+</div>
+
+<script src="utils.js"></script>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+const clientId = params.get("id");
+
+/* 🔥 LOAD CLIENT */
+async function loadClient() {
+
+    if (!clientId) {
+        document.getElementById("resultat-affiche").innerText =
+            "⚠️ Aucun client sélectionné";
+        return;
+    }
+
+    const res = await fetch(API_URL + "/clients");
+    const data = await res.json();
+
+    const client = data.find(c => c.id === clientId);
+
+    if (!client) return;
+
+    document.getElementById("code").value = client["code client"] || "";
+    document.getElementById("nom").value = client["nom client"] || "";
+    document.getElementById("assistant").value = client["assistant"] || "";
+    document.getElementById("collaborateur").value = client["collaborateur"] || "";
+    document.getElementById("annee").value = new Date().getFullYear();
+    document.getElementById("cloture").value = client["date de cloture"] || "";
+    document.getElementById("ca").value = client["CA R"] || "";
+    document.getElementById("resultat").value = client["resultat R"] || "";
+    document.getElementById("anciennete").value = client["ancienneté"] || "";
+    document.getElementById("honos").value = client["honoraires cpta"] || "";
+
+}
+
+loadClient();
+
+/* 🔥 SAVE AUTO */
+document.getElementById("temps").addEventListener("change", function(e) {
+    updateField(clientId, "temps passe", e.target.value, e.target);
+});
+
+document.getElementById("honos").addEventListener("change", function(e) {
+    updateField(clientId, "honoraires cpta", e.target.value, e.target);
+});
+
+/* 🔥 CALCUL */
+function calculer() {
+
+    const temps = parseFloat(document.getElementById("temps").value) || 0;
+    const honos = parseFloat(document.getElementById("honos").value) || 0;
+
+    if (temps === 0) {
+        document.getElementById("resultat-affiche").innerText = "Temps invalide";
+        return;
+    }
+
+    const taux = honos / temps;
+
+    let couleur = "#27ae60";
+    if (taux < 50) couleur = "#e74c3c";
+    else if (taux < 80) couleur = "#f39c12";
+
+    document.getElementById("resultat-affiche").innerHTML =
+        `💰 Rendement : <span style="color:${couleur}">${taux.toFixed(2)} €/h</span>`;
+}
+</script>
+
+</body>
+</html>
