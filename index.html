@@ -309,7 +309,6 @@ dialog {
 <script src="utils.js"></script>
 <script>
 let clientsData = [];
-let dataGlobal = [];
 let editingClientId = null;
 
 /* ===== Helpers ===== */
@@ -531,7 +530,7 @@ function applyFilters() {
 
 async function loadClients() {
     clientsData = await fetchClients();
-    dataGlobal = clientsData;
+    dataGlobal = clientsData; // variable globale venant de utils.js
 
     clientsData = clientsData.map(c => {
         if (c["rentabilite"] === undefined || c["rentabilite"] === null || c["rentabilite"] === "") {
