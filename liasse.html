@@ -116,8 +116,8 @@ input[type="checkbox"] {
 <tbody id="table"></tbody>
 </table>
 
+<script src="utils.js"></script>
 <script>
-const API_URL = "https://projet-crm-m0o3.onrender.com";
 
 let dataGlobal = [];
 
@@ -142,23 +142,6 @@ async function updateCheckbox(id, field, value, el) {
 
 
 // 🔥 champ texte / nombre
-async function updateField(id, field, value, el) {
-
-    el.style.outline = "2px solid orange";
-
-    try {
-        await fetch(API_URL + "/update-airtable", {
-            method: "POST",
-            headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({ id, field, value })
-        });
-
-        el.style.outline = "2px solid green";
-
-    } catch (error) {
-        el.style.outline = "2px solid red";
-    }
-}
 
 
 // affichage
