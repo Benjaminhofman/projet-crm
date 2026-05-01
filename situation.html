@@ -121,23 +121,23 @@ function display(data) {
         table.innerHTML += `
         <tr>
 
-            <td>${c["code client"] || ""}</td>
-            <td>${c["nom client"] || ""}</td>
-            <td>${c["assistant"] || ""}</td>
-            <td>${c["collaborateur"] || ""}</td>
-            <td>${c["année"] || ""}</td>
-            <td>${c["date de cloture"] || ""}</td>
+            <td>${esc(c["code client"])}</td>
+            <td>${esc(c["nom client"])}</td>
+            <td>${esc(c["assistant"])}</td>
+            <td>${esc(c["collaborateur"])}</td>
+            <td>${esc(c["année"])}</td>
+            <td>${esc(c["date de cloture"])}</td>
 
             <td>
                 <input type="date"
                     value="${formatDate(c["date situation"])}"
-                    onchange="updateField('${c.id}', 'date situation', this.value)">
+                    onchange="updateField('${esc(c.id)}', 'date situation', this.value)">
             </td>
 
             <td>
                 <input type="checkbox"
                     ${c["realisation situ"] ? "checked" : ""}
-                    onchange="updateField('${c.id}', 'realisation situ', this.checked)">
+                    onchange="updateField('${esc(c.id)}', 'realisation situ', this.checked)">
             </td>
 
         </tr>`;

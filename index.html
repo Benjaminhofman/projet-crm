@@ -180,6 +180,7 @@ tr:hover {
 
         <input type="text" id="search" placeholder="🔍 Rechercher un client...">
         <input type="number" id="filter-renta" placeholder="Min /10" style="width:120px;">
+        <button onclick="exportIndexCSV()" style="background:#27ae60;color:white;padding:8px 14px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:14px;">⬇ Export CSV</button>
     </div>
 </div>
 
@@ -238,6 +239,7 @@ tr:hover {
 <script src="utils.js"></script>
 <script>
 let clientsData = [];
+let displayedClients = [];
 
 /* 🔥 RENTABILITE */
 
@@ -352,6 +354,7 @@ async function loadClients() {
 
 function displayClients(data) {
 
+    displayedClients = data;
     updateDashboard(data);
 
     const table = document.getElementById("clients-table");
@@ -460,6 +463,23 @@ function sortByResultat() {
 
 function viewClient(id) {
     window.location.href = "client.html?id=" + id;
+}
+
+function exportIndexCSV() {
+    exportCSV(displayedClients, 'clients.csv', [
+        { label: "Code",          field: "code client" },
+        { label: "Nom",           field: "nom client" },
+        { label: "Clôture",       field: "date de cloture" },
+        { label: "Structure",     field: "structure" },
+        { label: "Ancienneté",    field: "ancienneté" },
+        { label: "Honoraires",    field: "honoraires cpta" },
+        { label: "Collaborateur", field: "collaborateur" },
+        { label: "Assistant",     field: "assistant" },
+        { label: "CA",            field: "CA R" },
+        { label: "Résultat",      field: "resultat R" },
+        { label: "Activité",      field: "activite R" },
+        { label: "Rentabilité",   field: "rentabilite" }
+    ]);
 }
 
 function updateDashboard(data) {
