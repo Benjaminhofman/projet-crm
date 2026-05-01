@@ -95,18 +95,85 @@ body {
     font-size: 12px;
 }
 
-.btn-anniv {
-    background: #e67e22;
-    color: white;
-    padding: 8px 12px;
-    border-radius: 8px;
-    text-decoration: none;
-    font-weight: bold;
-    transition: 0.2s;
+/* Menu déroulant navigation */
+.nav-dropdown {
+    position: relative;
 }
 
-.btn-anniv:hover {
-    background: #d35400;
+.nav-btn {
+    background: rgba(255,255,255,0.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: background 0.2s;
+    white-space: nowrap;
+}
+
+.nav-btn:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.nav-arrow {
+    font-size: 11px;
+    transition: transform 0.2s;
+    display: inline-block;
+}
+
+.nav-btn.open .nav-arrow {
+    transform: rotate(180deg);
+}
+
+.nav-menu {
+    display: none;
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.18);
+    min-width: 230px;
+    z-index: 200;
+    overflow: hidden;
+    animation: fadeDown 0.15s ease;
+}
+
+.nav-menu.open {
+    display: block;
+}
+
+@keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.nav-menu a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 18px;
+    color: #2c3e50;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.12s;
+    border-bottom: 1px solid #f0f2f5;
+}
+
+.nav-menu a:last-child {
+    border-bottom: none;
+}
+
+.nav-menu a:hover {
+    background: #f4f6fb;
+    color: #273c75;
+    padding-left: 22px;
 }
 
 table {
@@ -171,12 +238,21 @@ tr:hover {
     <h2>📊 CRM Clients</h2>
 
     <div style="display:flex; gap:10px; align-items:center;">
-        <a href="declaratif.html" class="btn" style="background:#e67e22;">📑 Déclaratif</a>
-        <a href="missions.html" class="btn" style="background:#8e44ad;">🚀 Missions exceptionnelles</a>
-        <a href="opportunites.html" class="btn" style="background:#2980b9;">🎯 Suivi opportunités</a>
-        <a href="commercial.html" class="btn" style="background:#16a085;">💰 Suivi commercial</a>
-        <a href="rendement.html" class="btn" style="background:#c0392b;">📈 Rendement</a>
-        <a href="anniversaires.html" class="btn-anniv">🎂 Anniversaires</a>
+
+        <!-- Menu déroulant navigation -->
+        <div class="nav-dropdown">
+            <button class="nav-btn" id="nav-btn" onclick="toggleNavMenu()">
+                ☰ Navigation <span class="nav-arrow">▾</span>
+            </button>
+            <div class="nav-menu" id="nav-menu">
+                <a href="declaratif.html">📑 Déclaratif</a>
+                <a href="missions.html">🚀 Missions exceptionnelles</a>
+                <a href="opportunites.html">🎯 Suivi opportunités</a>
+                <a href="commercial.html">💰 Suivi commercial</a>
+                <a href="rendement.html">📈 Rendement</a>
+                <a href="anniversaires.html">🎂 Anniversaires</a>
+            </div>
+        </div>
 
         <input type="text" id="search" placeholder="🔍 Rechercher un client...">
         <input type="number" id="filter-renta" placeholder="Min /10" style="width:120px;">
@@ -500,6 +576,22 @@ function updateDashboard(data) {
 }
 
 loadClients();
+
+/* Menu déroulant navigation */
+function toggleNavMenu() {
+    const menu = document.getElementById('nav-menu');
+    const btn  = document.getElementById('nav-btn');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+}
+
+document.addEventListener('click', function(e) {
+    const dropdown = document.querySelector('.nav-dropdown');
+    if (dropdown && !dropdown.contains(e.target)) {
+        document.getElementById('nav-menu').classList.remove('open');
+        document.getElementById('nav-btn').classList.remove('open');
+    }
+});
 </script>
 
 </body>
