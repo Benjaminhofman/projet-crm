@@ -55,6 +55,15 @@ th {
     color: white;
 }
 
+tr:nth-child(even) {
+    background: #f8f9fc;
+}
+
+tr:hover {
+    background: #e8f0fe;
+    cursor: pointer;
+}
+
 textarea {
     width: 100%;
     height: 60px;
@@ -115,7 +124,8 @@ function display(data) {
     data.forEach(c => {
 
         table.innerHTML += `
-        <tr>
+        <tr onclick="window.location.href='client.html?id=${c.id}'"
+            style="cursor:pointer">
 
             <td>${c["code client"] || ""}</td>
             <td>${c["année"] || ""}</td>
@@ -140,6 +150,7 @@ function buildTextarea(c, field) {
     return `
     <td>
         <textarea
+            onclick="event.stopPropagation()"
             onchange="updateField('${c.id}', '${field}', this.value)"
         >${c[field] || ""}</textarea>
     </td>`;

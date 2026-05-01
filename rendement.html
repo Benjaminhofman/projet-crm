@@ -60,6 +60,11 @@ tr:nth-child(even) {
     background: #f8f9fc;
 }
 
+tr:hover {
+    background: #e8f0fe;
+    cursor: pointer;
+}
+
 input {
     width: 80px;
     padding: 4px;
@@ -214,6 +219,13 @@ function display(data) {
         });
 
         calculerLigne(tr);
+
+        // Clic sur la ligne → fiche client (sauf si clic sur un input)
+        tr.addEventListener('click', (e) => {
+            if (!e.target.closest('input')) {
+                window.location.href = 'client.html?id=' + c.id;
+            }
+        });
 
         table.appendChild(tr);
     });
