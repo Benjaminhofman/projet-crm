@@ -1,5 +1,6 @@
 import csv
 import logging
+import sys
 
 
 def parse_fec_file(file_path: str) -> dict:
@@ -49,3 +50,29 @@ def parse_fec_file(file_path: str) -> dict:
         vals["credit"] = round(vals["credit"], 2)
 
     return soldes
+
+
+if __name__ == "__main__":
+    if len(sys.argv) < 2:
+        print("Usage : python fec_parser.py <chemin_fichier_fec>")
+        sys.exit(1)
+
+    balance = parse_fec_file(sys.argv[1])
+
+    col = "{:<12} {:>18} {:>18} {:>18}"
+    separateur = "-" * 70
+
+    print(separateur)
+    print(col.format("Compte", "Débit", "Crédit", "Solde"))
+    print(separateur)
+
+    for compte, vals in sorted(balance.items()):
+        print(col.format(
+            compte,
+            f"{vals['debit']:,.2f}".replace(",", " "),
+            f"{vals['credit']:,.2f}".replace(",", " "),
+            f"{vals['solde']:,.2f}".replace(",", " "),
+        ))
+
+    print(separateur)
+    print(f"Total : {len(balance)} compte(s)")
