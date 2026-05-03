@@ -200,7 +200,9 @@ def create_missing_fields() -> None:
         "caf", "bfr", "frng", "tresorerie_nette",
         "productivite", "capacite_remboursement",
         "liquidite_generale", "delai_client", "delai_fournisseur", "ratio_endettement",
-        "charges_financieres", "produits_financiers",
+        "charges_financieres", "charges_exceptionnelles",
+        "produits_financiers", "produits_exceptionnels",
+        "compte_791",
         "dotations_amortissements", "impot_societes",
         "tns", "impots_taxes", "sous_traitance", "entretien_reparation",
         "personnel_exterieur", "frais_telecom", "achats_non_stockes",
@@ -231,18 +233,18 @@ def create_missing_fields() -> None:
         try:
             with urllib.request.urlopen(req) as resp:
                 resp.read()
-            logging.info("create_missing_fields : champ '%s' créé.", airtable_name)
+            print(f"[create_fields] ✓ créé  : {airtable_name}")
             created += 1
         except urllib.error.HTTPError as e:
             if e.code == 422:
-                logging.debug("create_missing_fields : champ '%s' existe déjà — ignoré.", airtable_name)
+                print(f"[create_fields] ~ existe : {airtable_name}")
             else:
                 body = e.read().decode(errors="replace")
-                logging.error("create_missing_fields : erreur HTTP %d sur '%s' — %s", e.code, airtable_name, body)
+                print(f"[create_fields] ✗ erreur {e.code} : {airtable_name} — {body}")
         finally:
             time.sleep(0.2)  # respecte la limite 5 req/sec
 
-    print(f"[create_missing_fields] {created} champ(s) créé(s).")
+    print(f"[create_fields] terminé : {created} créé(s), {len(fields_to_create) - created} déjà présent(s).")
 
 
 def sync_all(indicateurs: list) -> dict:
