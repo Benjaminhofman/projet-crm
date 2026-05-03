@@ -1,5 +1,5 @@
 -- Généré par check_fields.py — corrigé manuellement
--- 128 colonnes : champs Airtable (encodage normalisé) + indicateurs FEC calculés
+-- 135 colonnes : champs Airtable (encodage normalisé) + indicateurs FEC calculés
 
 CREATE TABLE IF NOT EXISTS clients (
 
@@ -30,7 +30,15 @@ CREATE TABLE IF NOT EXISTS clients (
     code_impot_gouv                    TEXT,
     code_urssaf                        TEXT,
     prel_cfe                           TEXT,
+    franchise_tva_prest                TEXT,        -- franchise TVA prest
+    franchise_tva_achrevente           TEXT,        -- franchise TVA achat-revente
+    arbitrage_remuneration_dirigeant   TEXT,        -- arbitrage rémunération dirigeant
+
     -- ── Missions & suivi ─────────────────────────────────────────────────────
+    mission_retraite                   TEXT,
+    mission_patrimoniale               TEXT,
+    mission_placement                  TEXT,
+    op_prevoyance                      TEXT,        -- op Prevoyance
     patrimoniale                       TEXT,
     placement                          TEXT,
     prevoyance                         TEXT,
