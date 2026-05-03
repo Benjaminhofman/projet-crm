@@ -93,7 +93,7 @@ def get_all_records() -> dict:
                 print(f"[debug] enregistrement brut : {rec}")
 
         for record in data.get("records", []):
-            siret = record.get("fields", {}).get(SIRET_FIELD, "")
+            siret = record.get("fields", {}).get("siret", "")
             if siret:
                 result[str(siret).strip()] = record["id"]
             else:
