@@ -34,6 +34,14 @@ def calculate_indicators(rows: list) -> list:
       - report_a_nouveau        : comptes 11   → solde × -1
       - compte_exploitant       : comptes 108  → solde × -1
       - compte_courant_associe  : comptes 455  → solde × -1
+      - charges_financieres    : comptes 66    → solde  (sous-ensemble de charges)
+      - charges_exceptionnelles: comptes 67    → solde  (sous-ensemble de charges)
+      - achats_non_stockes     : comptes 606   → solde  (sous-ensemble de charges)
+      - sous_traitance         : comptes 611   → solde  (sous-ensemble de charges)
+      - entretien_reparation   : comptes 615   → solde  (sous-ensemble de charges)
+      - personnel_exterieur    : comptes 621   → solde  (sous-ensemble de charges)
+      - frais_telecom          : comptes 626   → solde  (sous-ensemble de charges)
+      - impots_taxes           : comptes 63    → solde  (sous-ensemble de charges, inclut cfe)
       - prestation     : "presta" si 706 présent et 707 absent
       - multitva       : "multitva" si plusieurs comptes 4457* distincts
       - resultat       : produits - charges + compte_791
@@ -48,6 +56,10 @@ def calculate_indicators(rows: list) -> list:
         "placements": float, "capital": float, "reserves": float,
         "report_a_nouveau": float, "compte_exploitant": float,
         "compte_courant_associe": float,
+        "charges_financieres": float, "charges_exceptionnelles": float,
+        "achats_non_stockes": float, "sous_traitance": float,
+        "entretien_reparation": float, "personnel_exterieur": float,
+        "frais_telecom": float, "impots_taxes": float,
         "prestation": str|None, "multitva": str|None,
         "resultat": float}, ...]
     """
@@ -75,6 +87,14 @@ def calculate_indicators(rows: list) -> list:
         "report_a_nouveau":        0.0,
         "compte_exploitant":       0.0,
         "compte_courant_associe":  0.0,
+        "charges_financieres":     0.0,
+        "charges_exceptionnelles": 0.0,
+        "achats_non_stockes":      0.0,
+        "sous_traitance":          0.0,
+        "entretien_reparation":    0.0,
+        "personnel_exterieur":     0.0,
+        "frais_telecom":           0.0,
+        "impots_taxes":            0.0,
     })
 
     # Indicateurs qualitatifs — ensembles de comptes rencontrés par SIRET
@@ -134,6 +154,31 @@ def calculate_indicators(rows: list) -> list:
 
             elif _commence_par(compte, "627"):
                 acc[siret]["banque"] += solde
+
+            # Charges détaillées — if indépendants pour cumuler sans exclusion
+            if _commence_par(compte, "66"):
+                acc[siret]["charges_financieres"] += solde
+
+            if _commence_par(compte, "67"):
+                acc[siret]["charges_exceptionnelles"] += solde
+
+            if _commence_par(compte, "606"):
+                acc[siret]["achats_non_stockes"] += solde
+
+            if _commence_par(compte, "611"):
+                acc[siret]["sous_traitance"] += solde
+
+            if _commence_par(compte, "615"):
+                acc[siret]["entretien_reparation"] += solde
+
+            if _commence_par(compte, "621"):
+                acc[siret]["personnel_exterieur"] += solde
+
+            if _commence_par(compte, "626"):
+                acc[siret]["frais_telecom"] += solde
+
+            if _commence_par(compte, "63"):
+                acc[siret]["impots_taxes"] += solde
 
         # ── Produits financiers / exceptionnels (sous-ensembles de 7) ───────────
 
@@ -204,6 +249,14 @@ def calculate_indicators(rows: list) -> list:
             "report_a_nouveau":        round(vals["report_a_nouveau"],         2),
             "compte_exploitant":       round(vals["compte_exploitant"],        2),
             "compte_courant_associe":  round(vals["compte_courant_associe"],   2),
+            "charges_financieres":     round(vals["charges_financieres"],     2),
+            "charges_exceptionnelles": round(vals["charges_exceptionnelles"], 2),
+            "achats_non_stockes":      round(vals["achats_non_stockes"],      2),
+            "sous_traitance":          round(vals["sous_traitance"],          2),
+            "entretien_reparation":    round(vals["entretien_reparation"],    2),
+            "personnel_exterieur":     round(vals["personnel_exterieur"],     2),
+            "frais_telecom":           round(vals["frais_telecom"],           2),
+            "impots_taxes":            round(vals["impots_taxes"],            2),
             "prestation":              "presta" if comptes_706[siret] and not comptes_707[siret] else None,
             "multitva":                "multitva" if len(comptes_4457[siret]) > 1 else None,
             "resultat":                round(vals["produits"] - vals["charges"] + c791, 2),
