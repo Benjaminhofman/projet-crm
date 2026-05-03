@@ -73,6 +73,9 @@ FIELD_MAPPING = {
     "compte_courant_associe":     "compte_courant_associe",
     "placements":                 "placements",
     "compte_791":                 "compte_791",
+    "achats_marchandises":        "achats_marchandises",
+    "variation_stocks":           "variation_stocks",
+    "achats_matieres":            "achats_matieres",
 }
 
 
@@ -211,6 +214,7 @@ def create_missing_fields() -> None:
         "clients", "fournisseurs",
         "capital", "reserves", "report_a_nouveau",
         "compte_exploitant", "compte_courant_associe", "placements",
+        "achats_marchandises", "variation_stocks", "achats_matieres",
     ]
 
     for airtable_name in fields_to_create:

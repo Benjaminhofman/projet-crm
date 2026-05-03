@@ -111,6 +111,9 @@ def calculate_indicators(rows: list) -> list:
         "stocks":                   0.0,
         "clients":                  0.0,
         "fournisseurs":             0.0,
+        "achats_marchandises":      0.0,
+        "variation_stocks":         0.0,
+        "achats_matieres":          0.0,
     })
 
     # Indicateurs qualitatifs — ensembles de comptes rencontrés par SIRET
@@ -202,6 +205,15 @@ def calculate_indicators(rows: list) -> list:
             if _commence_par(compte, "695"):
                 acc[siret]["impot_societes"] += solde
 
+            if _commence_par(compte, "607"):
+                acc[siret]["achats_marchandises"] += solde
+
+            if _commence_par(compte, "603"):
+                acc[siret]["variation_stocks"] += solde
+
+            if _commence_par(compte, "601") or _commence_par(compte, "602"):
+                acc[siret]["achats_matieres"] += solde
+
         # ── Produits financiers / exceptionnels (sous-ensembles de 7) ───────────
 
         if _commence_par(compte, "76"):
@@ -279,7 +291,10 @@ def calculate_indicators(rows: list) -> list:
         c791 = vals["compte_791"]
 
         marge_brute = (
-            vals["ca"] - vals["achats_non_stockes"] - vals["sous_traitance"]
+            vals["ca"]
+            - vals["achats_marchandises"] - vals["variation_stocks"]
+            - vals["achats_matieres"]     - vals["achats_non_stockes"]
+            - vals["sous_traitance"]
         )
         va = (
             marge_brute
@@ -367,6 +382,9 @@ def calculate_indicators(rows: list) -> list:
             "stocks":                   round(vals["stocks"],                   2),
             "clients":                  round(vals["clients"],                  2),
             "fournisseurs":             round(vals["fournisseurs"],             2),
+            "achats_marchandises":      round(vals["achats_marchandises"],      2),
+            "variation_stocks":         round(vals["variation_stocks"],         2),
+            "achats_matieres":          round(vals["achats_matieres"],          2),
             "prestation":              "presta" if comptes_706[siret] and not comptes_707[siret] else None,
             "multitva":                "multitva" if len(comptes_4457[siret]) > 1 else None,
             "resultat":                round(res, 2),
