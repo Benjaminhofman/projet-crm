@@ -85,6 +85,7 @@ def get_all_records() -> dict:
             params["offset"] = offset
 
         url  = f"{table_url}?{urllib.parse.urlencode(params)}"
+        print(f"[debug] GET {url}")
         data = _request(url, token)
 
         for record in data.get("records", []):
