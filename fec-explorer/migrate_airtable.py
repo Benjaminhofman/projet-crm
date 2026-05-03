@@ -24,14 +24,43 @@ BASE_ID  = "appcYhoQfSuz8ozil"
 TABLE_ID = "tblm1aQ4OJ9W1hwm8"
 
 # Identifiants SQL qui nécessitent des guillemets doubles
-_RE_STRIP   = re.compile(r"[^a-z0-9]+")
-_RE_DIGIT   = re.compile(r"^\d")
-_RESERVED   = {"is", "order", "table", "user", "type", "end", "start", "check", "index"}
+_RE_DIGIT  = re.compile(r"^\d")
+_RESERVED  = {"is", "order", "table", "user", "type", "end", "start", "check", "index"}
+
+# Table de remplacement des caractères accentués (minuscules + majuscules)
+_ACCENT_MAP = str.maketrans({
+    'é': 'e', 'è': 'e', 'ê': 'e', 'ë': 'e',
+    'à': 'a', 'â': 'a', 'ä': 'a',
+    'ô': 'o', 'ö': 'o',
+    'û': 'u', 'ù': 'u', 'ü': 'u',
+    'î': 'i', 'ï': 'i',
+    'ç': 'c',
+    'É': 'e', 'È': 'e', 'Ê': 'e', 'Ë': 'e',
+    'À': 'a', 'Â': 'a', 'Ä': 'a',
+    'Ô': 'o', 'Ö': 'o',
+    'Û': 'u', 'Ù': 'u', 'Ü': 'u',
+    'Î': 'i', 'Ï': 'i',
+    'Ç': 'c',
+})
+_RE_SPECIAL = re.compile(r"[^a-z0-9_]+")
+_RE_MULTI_  = re.compile(r"_+")
 
 
-def _col(name: str) -> str:
-    """Nom de champ Airtable → identifiant SQL snake_case."""
-    s = _RE_STRIP.sub("_", name.lower().strip())
+def normalize_field_name(name: str) -> str:
+    """
+    Convertit un nom de champ Airtable en identifiant SQL valide :
+      1. Supprime les accents (é→e, è→e, à→a, ê→e, ô→o, û→u, î→i, ù→u, ç→c, ...)
+      2. Met tout en minuscules
+      3. Remplace espaces, apostrophes et tirets par _
+      4. Supprime tous les caractères spéciaux restants sauf _
+      5. Réduit les __ consécutifs en un seul _
+    """
+    s = name.strip()
+    s = s.translate(_ACCENT_MAP)          # accents → ASCII
+    s = s.lower()                          # minuscules
+    s = s.replace("'", "_").replace("-", "_").replace(" ", "_")
+    s = _RE_SPECIAL.sub("_", s)           # autres caractères spéciaux → _
+    s = _RE_MULTI_.sub("_", s)            # __ → _
     return s.strip("_")
 
 
@@ -121,7 +150,7 @@ def upsert_record(cur, fields: dict) -> bool:
     for at_name, value in fields.items():
         if value is None or value == "":
             continue
-        col = _col(at_name)
+        col = normalize_field_name(at_name)
         if col:
             pg[col] = value
 
