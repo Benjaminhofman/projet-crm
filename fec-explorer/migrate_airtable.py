@@ -27,6 +27,11 @@ TABLE_ID = "tblm1aQ4OJ9W1hwm8"
 _RE_DIGIT  = re.compile(r"^\d")
 _RESERVED  = {"is", "order", "table", "user", "type", "end", "start", "check", "index"}
 
+# Champs à forcer en TEXT quelle que soit la valeur Airtable (ex : dates non standard)
+CHAMPS_TEXT_FORCE = frozenset({
+    "date_de_cloture",
+})
+
 # Champs Airtable à ne pas migrer vers PostgreSQL (noms normalisés)
 CHAMPS_A_IGNORER = frozenset({
     "mission_retraite",
@@ -169,7 +174,7 @@ def upsert_record(cur, fields: dict) -> bool:
             continue
         col = normalize_field_name(at_name)
         if col and col not in CHAMPS_A_IGNORER:
-            pg[col] = value
+            pg[col] = str(value) if col in CHAMPS_TEXT_FORCE else value
 
     siret = str(pg.get("siret", "")).strip()
     if not siret:
