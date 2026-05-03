@@ -5,7 +5,7 @@ import urllib.error
 import json
 
 BASE_ID     = "appcYhoQfSuz8ozil"
-TABLE_NAME  = "table principale"
+TABLE_NAME  = "Base clients"
 
 token = os.environ.get("AIRTABLE_TOKEN")
 if not token:
