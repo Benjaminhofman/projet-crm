@@ -401,15 +401,11 @@ def calculate_indicators(rows: list) -> list:
             "resultat_financier":      round(vals["produits_financiers"]    - vals["charges_financieres"],     2),
             "resultat_exceptionnel":   round(vals["produits_exceptionnels"] - vals["charges_exceptionnelles"], 2),
             "caf":                     round(caf,  2),
-            "bfr":                     round(bfr,  2),
-            "frng":                    round(frng, 2),
             "productivite":            productivite,
             "capacite_remboursement":  capacite_remboursement,
             "liquidite_generale":      liquidite_generale,
             "delai_client":            delai_client,
-            "delai_fournisseur":       delai_fournisseur,
             "ratio_endettement":       ratio_endettement,
-            "tresorerie_nette":        tresorerie_nette,
         })
 
     return resultat
