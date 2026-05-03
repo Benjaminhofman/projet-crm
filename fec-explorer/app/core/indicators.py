@@ -299,6 +299,9 @@ def calculate_indicators(rows: list) -> list:
             - immo
         )
 
+        productivite            = round(va / vals["masse_salariale"], 2) if vals["masse_salariale"] > 0 else 0
+        capacite_remboursement  = round(abs(vals["emprunt"]) / caf, 2) if caf > 0 else 999
+
         resultat.append({
             "siret":           siret,
             "ca":              round(vals["ca"],              2),
@@ -354,6 +357,8 @@ def calculate_indicators(rows: list) -> list:
             "caf":                     round(caf,  2),
             "bfr":                     round(bfr,  2),
             "frng":                    round(frng, 2),
+            "productivite":            productivite,
+            "capacite_remboursement":  capacite_remboursement,
         })
 
     return resultat
