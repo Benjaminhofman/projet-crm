@@ -5,9 +5,45 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-BASE_ID    = "appcYhoQfSuz8ozil"
-TABLE_NAME = "Base clients"
+BASE_ID     = "appcYhoQfSuz8ozil"
+TABLE_NAME  = "Base clients"
 SIRET_FIELD = "SIRET"          # nom exact du champ SIRET dans Airtable
+
+# Correspondance clé Python → nom du champ Airtable
+FIELD_MAPPING = {
+    # Champs avec noms différents dans Airtable
+    "ca":                    "CA R",
+    "assurance":             "assurance R",
+    "deplacement":           "deplacement R",
+    "loyer":                 "loyer R",
+    "cfe":                   "CFE R",
+    "publicite":             "publicite R",
+    "honoraires":            "honoraires R",
+    "banque":                "banque R",
+    "emprunt":               "emprunt R",
+    "masse_salariale":       "m_salariale R",
+    "produits":              "produit R",
+    "charges":               "charge R",
+    "tresorerie":            "tresorerie R",
+    "resultat":              "resultat R",
+    # Champs dont le nom Airtable = nom du code
+    "marge_brute":           "marge_brute",
+    "valeur_ajoutee":        "valeur_ajoutee",
+    "ebe":                   "ebe",
+    "rex":                   "rex",
+    "caf":                   "caf",
+    "bfr":                   "bfr",
+    "frng":                  "frng",
+    "tresorerie_nette":      "tresorerie_nette",
+    "productivite":          "productivite",
+    "capacite_remboursement":"capacite_remboursement",
+    "liquidite_generale":    "liquidite_generale",
+    "delai_client":          "delai_client",
+    "delai_fournisseur":     "delai_fournisseur",
+    "ratio_endettement":     "ratio_endettement",
+    "resultat_financier":    "resultat_financier",
+    "resultat_exceptionnel": "resultat_exceptionnel",
+}
 
 
 def _get_token() -> str:
