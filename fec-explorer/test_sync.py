@@ -14,6 +14,12 @@ rows        = parse_multiple_fec(dossier)
 indicateurs = calculate_indicators(rows)
 print(f"{len(indicateurs)} indicateur(s) calculé(s)\n")
 
+if indicateurs:
+    print("Clés du premier indicateur :")
+    for cle in indicateurs[0].keys():
+        print(f"  {cle}")
+    print()
+
 print("Synchronisation Airtable...")
 res = sync_all(indicateurs)
 
