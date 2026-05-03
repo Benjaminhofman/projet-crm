@@ -307,6 +307,25 @@ def calculate_indicators(rows: list) -> list:
             "prestation":              "presta" if comptes_706[siret] and not comptes_707[siret] else None,
             "multitva":                "multitva" if len(comptes_4457[siret]) > 1 else None,
             "resultat":                round(vals["produits"] - vals["charges"] + c791, 2),
+            "marge_brute":             round(
+                vals["ca"] - vals["achats_non_stockes"] - vals["sous_traitance"],
+                2
+            ),
+            "valeur_ajoutee":          round(
+                vals["ca"]
+                - vals["achats_non_stockes"]
+                - vals["sous_traitance"]
+                - vals["loyer"]
+                - vals["assurance"]
+                - vals["entretien_reparation"]
+                - vals["frais_telecom"]
+                - vals["publicite"]
+                - vals["honoraires"]
+                - vals["banque"]
+                - vals["deplacement"]
+                - vals["personnel_exterieur"],
+                2
+            ),
         })
 
     return resultat
