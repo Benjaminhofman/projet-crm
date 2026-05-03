@@ -25,7 +25,15 @@ def calculate_indicators(rows: list) -> list:
       - publicite      : comptes 623       → solde
       - honoraires     : comptes 6226      → solde
       - banque         : comptes 627       → solde
-      - compte_791     : comptes 791       → solde × -1
+      - compte_791              : comptes 791  → solde × -1
+      - produits_financiers     : comptes 76   → solde × -1  (sous-ensemble de produits)
+      - produits_exceptionnels  : comptes 77   → solde × -1  (sous-ensemble de produits)
+      - placements              : comptes 508  → solde × -1  (sous-ensemble de tresorerie)
+      - capital                 : comptes 101  → solde × -1
+      - reserves                : comptes 106  → solde × -1
+      - report_a_nouveau        : comptes 11   → solde × -1
+      - compte_exploitant       : comptes 108  → solde × -1
+      - compte_courant_associe  : comptes 455  → solde × -1
       - prestation     : "presta" si 706 présent et 707 absent
       - multitva       : "multitva" si plusieurs comptes 4457* distincts
       - resultat       : produits - charges + compte_791
@@ -36,6 +44,10 @@ def calculate_indicators(rows: list) -> list:
         "assurance": float, "deplacement": float, "loyer": float,
         "cfe": float, "tns": float, "publicite": float, "honoraires": float,
         "banque": float, "compte_791": float,
+        "produits_financiers": float, "produits_exceptionnels": float,
+        "placements": float, "capital": float, "reserves": float,
+        "report_a_nouveau": float, "compte_exploitant": float,
+        "compte_courant_associe": float,
         "prestation": str|None, "multitva": str|None,
         "resultat": float}, ...]
     """
@@ -53,8 +65,16 @@ def calculate_indicators(rows: list) -> list:
         "tns":             0.0,
         "publicite":       0.0,
         "honoraires":      0.0,
-        "banque":          0.0,
-        "compte_791":      0.0,
+        "banque":                  0.0,
+        "compte_791":              0.0,
+        "produits_financiers":     0.0,
+        "produits_exceptionnels":  0.0,
+        "placements":              0.0,
+        "capital":                 0.0,
+        "reserves":                0.0,
+        "report_a_nouveau":        0.0,
+        "compte_exploitant":       0.0,
+        "compte_courant_associe":  0.0,
     })
 
     # Indicateurs qualitatifs — ensembles de comptes rencontrés par SIRET
@@ -115,13 +135,40 @@ def calculate_indicators(rows: list) -> list:
             elif _commence_par(compte, "627"):
                 acc[siret]["banque"] += solde
 
-        # ── Bilan ─────────────────────────────────────────────────────────────
+        # ── Produits financiers / exceptionnels (sous-ensembles de 7) ───────────
+
+        if _commence_par(compte, "76"):
+            acc[siret]["produits_financiers"] += solde * -1
+
+        if _commence_par(compte, "77"):
+            acc[siret]["produits_exceptionnels"] += solde * -1
+
+        # ── Bilan actif ───────────────────────────────────────────────────────
 
         if _commence_par(compte, "5"):
             acc[siret]["tresorerie"] += solde
+            if _commence_par(compte, "508"):
+                acc[siret]["placements"] += solde * -1
 
         if _commence_par(compte, "16"):
             acc[siret]["emprunt"] += solde
+
+        # ── Bilan passif ──────────────────────────────────────────────────────
+
+        if _commence_par(compte, "101"):
+            acc[siret]["capital"] += solde * -1
+
+        if _commence_par(compte, "106"):
+            acc[siret]["reserves"] += solde * -1
+
+        # 108 testé avant "11" pour éviter qu'il matche le préfixe "1"
+        if _commence_par(compte, "108"):
+            acc[siret]["compte_exploitant"] += solde * -1
+        elif _commence_par(compte, "11"):
+            acc[siret]["report_a_nouveau"] += solde * -1
+
+        if _commence_par(compte, "455"):
+            acc[siret]["compte_courant_associe"] += solde * -1
 
         # ── TVA multi-taux ────────────────────────────────────────────────────
 
@@ -147,11 +194,19 @@ def calculate_indicators(rows: list) -> list:
             "tns":             round(vals["tns"],             2),
             "publicite":       round(vals["publicite"],       2),
             "honoraires":      round(vals["honoraires"],      2),
-            "banque":          round(vals["banque"],          2),
-            "compte_791":      round(c791,                    2),
-            "prestation":      "presta" if comptes_706[siret] and not comptes_707[siret] else None,
-            "multitva":        "multitva" if len(comptes_4457[siret]) > 1 else None,
-            "resultat":        round(vals["produits"] - vals["charges"] + c791, 2),
+            "banque":                  round(vals["banque"],                  2),
+            "compte_791":              round(c791,                             2),
+            "produits_financiers":     round(vals["produits_financiers"],      2),
+            "produits_exceptionnels":  round(vals["produits_exceptionnels"],   2),
+            "placements":              round(vals["placements"],               2),
+            "capital":                 round(vals["capital"],                  2),
+            "reserves":                round(vals["reserves"],                 2),
+            "report_a_nouveau":        round(vals["report_a_nouveau"],         2),
+            "compte_exploitant":       round(vals["compte_exploitant"],        2),
+            "compte_courant_associe":  round(vals["compte_courant_associe"],   2),
+            "prestation":              "presta" if comptes_706[siret] and not comptes_707[siret] else None,
+            "multitva":                "multitva" if len(comptes_4457[siret]) > 1 else None,
+            "resultat":                round(vals["produits"] - vals["charges"] + c791, 2),
         })
 
     return resultat
