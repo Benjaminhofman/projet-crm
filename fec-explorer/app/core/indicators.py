@@ -64,8 +64,10 @@ def calculate_indicators(rows: list) -> list:
         "materiel_transport": float, "fond_commerce": float,
         "constructions": float, "materiel_informatique": float,
         "mobilier": float, "stocks": float,
+        "clients": float, "fournisseurs": float,
         "prestation": str|None, "multitva": str|None,
-        "resultat": float}, ...]
+        "resultat": float,
+        "bfr": float, "frng": float}, ...]
     """
     acc = defaultdict(lambda: {
         "ca":              0.0,
@@ -107,6 +109,8 @@ def calculate_indicators(rows: list) -> list:
         "materiel_informatique":    0.0,
         "mobilier":                 0.0,
         "stocks":                   0.0,
+        "clients":                  0.0,
+        "fournisseurs":             0.0,
     })
 
     # Indicateurs qualitatifs — ensembles de comptes rencontrés par SIRET
@@ -227,6 +231,16 @@ def calculate_indicators(rows: list) -> list:
         if _commence_par(compte, "3"):
             acc[siret]["stocks"] += solde
 
+        # ── Créances / dettes d'exploitation ─────────────────────────────────
+
+        # 411 : créances clients — actif débiteur → signe normal
+        if _commence_par(compte, "411"):
+            acc[siret]["clients"] += solde
+
+        # 401 : dettes fournisseurs — passif créditeur → × -1 pour valeur positive
+        if _commence_par(compte, "401"):
+            acc[siret]["fournisseurs"] += solde * -1
+
         # ── Bilan actif ───────────────────────────────────────────────────────
 
         if _commence_par(compte, "5"):
@@ -278,6 +292,13 @@ def calculate_indicators(rows: list) -> list:
         res  = vals["produits"] - vals["charges"] + c791
         caf  = res + vals["dotations_amortissements"] - c791
 
+        bfr  = vals["stocks"] + vals["clients"] - vals["fournisseurs"]
+        immo = vals["materiel_transport"] + vals["fond_commerce"] + vals["constructions"]
+        frng = (
+            vals["capital"] + vals["reserves"] + vals["report_a_nouveau"] + res
+            - immo
+        )
+
         resultat.append({
             "siret":           siret,
             "ca":              round(vals["ca"],              2),
@@ -319,6 +340,8 @@ def calculate_indicators(rows: list) -> list:
             "materiel_informatique":    round(vals["materiel_informatique"],    2),
             "mobilier":                 round(vals["mobilier"],                 2),
             "stocks":                   round(vals["stocks"],                   2),
+            "clients":                  round(vals["clients"],                  2),
+            "fournisseurs":             round(vals["fournisseurs"],             2),
             "prestation":              "presta" if comptes_706[siret] and not comptes_707[siret] else None,
             "multitva":                "multitva" if len(comptes_4457[siret]) > 1 else None,
             "resultat":                round(res, 2),
@@ -328,7 +351,9 @@ def calculate_indicators(rows: list) -> list:
             "rex":                     round(rex,         2),
             "resultat_financier":      round(vals["produits_financiers"]    - vals["charges_financieres"],     2),
             "resultat_exceptionnel":   round(vals["produits_exceptionnels"] - vals["charges_exceptionnelles"], 2),
-            "caf":                     round(caf, 2),
+            "caf":                     round(caf,  2),
+            "bfr":                     round(bfr,  2),
+            "frng":                    round(frng, 2),
         })
 
     return resultat
