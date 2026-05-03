@@ -61,6 +61,9 @@ def calculate_indicators(rows: list) -> list:
         "entretien_reparation": float, "personnel_exterieur": float,
         "frais_telecom": float, "impots_taxes": float,
         "dotations_amortissements": float, "impot_societes": float,
+        "materiel_transport": float, "fond_commerce": float,
+        "constructions": float, "materiel_informatique": float,
+        "mobilier": float, "stocks": float,
         "prestation": str|None, "multitva": str|None,
         "resultat": float}, ...]
     """
@@ -98,6 +101,12 @@ def calculate_indicators(rows: list) -> list:
         "impots_taxes":            0.0,
         "dotations_amortissements": 0.0,
         "impot_societes":           0.0,
+        "materiel_transport":       0.0,
+        "fond_commerce":            0.0,
+        "constructions":            0.0,
+        "materiel_informatique":    0.0,
+        "mobilier":                 0.0,
+        "stocks":                   0.0,
     })
 
     # Indicateurs qualitatifs — ensembles de comptes rencontrés par SIRET
@@ -197,6 +206,27 @@ def calculate_indicators(rows: list) -> list:
         if _commence_par(compte, "77"):
             acc[siret]["produits_exceptionnels"] += solde * -1
 
+        # ── Immobilisations (classe 2) ────────────────────────────────────────
+
+        # 2183/2184 sont des sous-ensembles de 218 — if indépendants
+        if _commence_par(compte, "218"):
+            acc[siret]["materiel_transport"] += solde
+        if _commence_par(compte, "2183"):
+            acc[siret]["materiel_informatique"] += solde
+        if _commence_par(compte, "2184"):
+            acc[siret]["mobilier"] += solde
+
+        if _commence_par(compte, "207"):
+            acc[siret]["fond_commerce"] += solde
+
+        if _commence_par(compte, "213"):
+            acc[siret]["constructions"] += solde
+
+        # ── Stocks (classe 3) ─────────────────────────────────────────────────
+
+        if _commence_par(compte, "3"):
+            acc[siret]["stocks"] += solde
+
         # ── Bilan actif ───────────────────────────────────────────────────────
 
         if _commence_par(compte, "5"):
@@ -268,6 +298,12 @@ def calculate_indicators(rows: list) -> list:
             "impots_taxes":             round(vals["impots_taxes"],             2),
             "dotations_amortissements": round(vals["dotations_amortissements"], 2),
             "impot_societes":           round(vals["impot_societes"],           2),
+            "materiel_transport":       round(vals["materiel_transport"],       2),
+            "fond_commerce":            round(vals["fond_commerce"],            2),
+            "constructions":            round(vals["constructions"],            2),
+            "materiel_informatique":    round(vals["materiel_informatique"],    2),
+            "mobilier":                 round(vals["mobilier"],                 2),
+            "stocks":                   round(vals["stocks"],                   2),
             "prestation":              "presta" if comptes_706[siret] and not comptes_707[siret] else None,
             "multitva":                "multitva" if len(comptes_4457[siret]) > 1 else None,
             "resultat":                round(vals["produits"] - vals["charges"] + c791, 2),
