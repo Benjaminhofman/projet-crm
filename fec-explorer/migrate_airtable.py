@@ -1,0 +1,207 @@
+"""
+migrate_airtable.py
+Migre tous les enregistrements Airtable vers PostgreSQL via UPSERT sur le champ siret.
+
+Usage :
+    AIRTABLE_TOKEN=xxx DATABASE_URL=postgresql://user:pass@host:5432/db python migrate_airtable.py
+"""
+import json
+import os
+import re
+import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+
+try:
+    import psycopg2
+except ImportError:
+    print("Erreur : psycopg2 non installé. Lance : pip install psycopg2-binary")
+    sys.exit(1)
+
+BASE_ID  = "appcYhoQfSuz8ozil"
+TABLE_ID = "tblm1aQ4OJ9W1hwm8"
+
+# Identifiants SQL qui nécessitent des guillemets doubles
+_RE_STRIP   = re.compile(r"[^a-z0-9]+")
+_RE_DIGIT   = re.compile(r"^\d")
+_RESERVED   = {"is", "order", "table", "user", "type", "end", "start", "check", "index"}
+
+
+def _col(name: str) -> str:
+    """Nom de champ Airtable → identifiant SQL snake_case."""
+    s = _RE_STRIP.sub("_", name.lower().strip())
+    return s.strip("_")
+
+
+def _qi(col: str) -> str:
+    """Guillemets doubles si le nom commence par un chiffre ou est un mot réservé SQL."""
+    if _RE_DIGIT.match(col) or col in _RESERVED:
+        return f'"{col}"'
+    return col
+
+
+# ── Airtable ──────────────────────────────────────────────────────────────────
+
+def fetch_all_records(token: str) -> list:
+    """Récupère tous les enregistrements Airtable avec pagination automatique."""
+    url_base = f"https://api.airtable.com/v0/{BASE_ID}/{TABLE_ID}"
+    records  = []
+    offset   = None
+    page     = 1
+
+    while True:
+        params = {"pageSize": "100"}
+        if offset:
+            params["offset"] = offset
+
+        url = f"{url_base}?{urllib.parse.urlencode(params)}"
+        req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
+
+        try:
+            with urllib.request.urlopen(req) as resp:
+                data = json.loads(resp.read().decode())
+        except urllib.error.HTTPError as e:
+            raise RuntimeError(f"Airtable HTTP {e.code} : {e.reason}") from e
+        except urllib.error.URLError as e:
+            raise RuntimeError(f"Airtable réseau : {e.reason}") from e
+
+        batch = data.get("records", [])
+        records.extend(batch)
+        print(f"  page {page} : {len(batch)} enregistrement(s) récupéré(s)")
+
+        offset = data.get("offset")
+        if not offset:
+            break
+
+        page += 1
+        time.sleep(0.2)  # respecte la limite 5 req/sec Airtable
+
+    return records
+
+
+# ── PostgreSQL ────────────────────────────────────────────────────────────────
+
+def build_upsert(pg: dict) -> tuple:
+    """
+    Construit la requête UPSERT et la liste de valeurs pour un enregistrement.
+    Retourne (sql, values).
+    """
+    cols   = list(pg.keys())
+    q_cols = [_qi(c) for c in cols]
+    vals   = [pg[c] for c in cols]
+
+    update_parts = [
+        f"{_qi(c)} = EXCLUDED.{_qi(c)}"
+        for c in cols if c != "siret"
+    ]
+
+    if update_parts:
+        on_conflict = f"DO UPDATE SET {', '.join(update_parts)}"
+    else:
+        on_conflict = "DO NOTHING"
+
+    sql = (
+        f"INSERT INTO clients ({', '.join(q_cols)}) "
+        f"VALUES ({', '.join(['%s'] * len(cols))}) "
+        f"ON CONFLICT (siret) {on_conflict}"
+    )
+    return sql, vals
+
+
+def upsert_record(cur, fields: dict) -> bool:
+    """
+    Upsert un enregistrement Airtable dans PostgreSQL.
+    - Mappe les noms Airtable vers colonnes SQL (snake_case).
+    - Ignore les valeurs None et chaînes vides pour ne pas écraser l'existant.
+    - Retourne False si le champ siret est absent ou vide.
+    """
+    pg = {}
+    for at_name, value in fields.items():
+        if value is None or value == "":
+            continue
+        col = _col(at_name)
+        if col:
+            pg[col] = value
+
+    siret = str(pg.get("siret", "")).strip()
+    if not siret:
+        return False
+    pg["siret"] = siret
+
+    sql, vals = build_upsert(pg)
+    cur.execute(sql, vals)
+    return True
+
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+
+def main():
+    token = os.environ.get("AIRTABLE_TOKEN")
+    if not token:
+        print("Erreur : variable d'environnement AIRTABLE_TOKEN non définie.")
+        sys.exit(1)
+
+    database_url = os.environ.get("DATABASE_URL")
+    if not database_url:
+        print("Erreur : variable d'environnement DATABASE_URL non définie.")
+        print("Exemple : DATABASE_URL=postgresql://user:password@localhost:5432/crm")
+        sys.exit(1)
+
+    # ── Récupération Airtable ─────────────────────────────────────────────────
+    print(f"Récupération des enregistrements depuis Airtable ({TABLE_ID})...")
+    try:
+        records = fetch_all_records(token)
+    except RuntimeError as e:
+        print(f"Erreur Airtable : {e}")
+        sys.exit(1)
+
+    print(f"Total : {len(records)} enregistrement(s) récupéré(s).\n")
+
+    # ── Migration PostgreSQL ──────────────────────────────────────────────────
+    print("Migration vers PostgreSQL...")
+    migrated = 0
+    skipped  = 0
+    errors   = 0
+
+    conn = None
+    try:
+        conn = psycopg2.connect(database_url)
+        with conn.cursor() as cur:
+            for rec in records:
+                try:
+                    ok = upsert_record(cur, rec.get("fields", {}))
+                    if ok:
+                        migrated += 1
+                    else:
+                        skipped += 1
+                except psycopg2.Error as e:
+                    # Colonne absente du schéma → on logue et on continue
+                    conn.rollback()
+                    print(f"  Avertissement (id={rec.get('id')}) : {e}")
+                    errors += 1
+                    # Réouvre le curseur après rollback
+                    cur = conn.cursor()
+
+        conn.commit()
+
+    except psycopg2.Error as e:
+        print(f"Erreur PostgreSQL (connexion) : {e}")
+        if conn:
+            conn.rollback()
+        sys.exit(1)
+    finally:
+        if conn:
+            conn.close()
+
+    # ── Rapport ───────────────────────────────────────────────────────────────
+    print(f"\n{migrated} ligne(s) migrée(s).")
+    if skipped:
+        print(f"{skipped} enregistrement(s) ignoré(s) (sans SIRET).")
+    if errors:
+        print(f"{errors} enregistrement(s) en erreur (colonne inconnue ou type incompatible).")
+
+
+if __name__ == "__main__":
+    main()
