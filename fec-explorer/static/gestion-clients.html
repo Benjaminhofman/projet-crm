@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestion Clients</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f4f6fb;
+    color: #2c3e50;
+    min-height: 100vh;
+}
+
+/* ── Header ── */
+.header {
+    background: #273c75;
+    color: white;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25);
+}
+.header h1 { font-size: 1.15rem; font-weight: 600; }
+.back-btn {
+    background: rgba(255,255,255,.15);
+    color: white;
+    border: 1px solid rgba(255,255,255,.3);
+    padding: 7px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 14px;
+    transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,.25); }
+
+/* ── Tabs ── */
+.tabs-bar {
+    background: #1e2f5e;
+    padding: 0 24px;
+    display: flex;
+    gap: 4px;
+}
+.tab-btn {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,.6);
+    padding: 13px 22px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 3px solid transparent;
+    transition: color .15s, border-color .15s;
+    letter-spacing: .01em;
+}
+.tab-btn:hover { color: rgba(255,255,255,.9); }
+.tab-btn.active { color: #fff; border-bottom-color: #f39c12; }
+
+/* ── Layout ── */
+.container {
+    max-width: 920px;
+    margin: 28px auto;
+    padding: 0 20px 60px;
+}
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* ── Cards ── */
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.07);
+    padding: 24px 28px;
+    margin-bottom: 18px;
+}
+.card-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: #273c75;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 18px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f2f5;
+}
+
+/* ── Form grid ── */
+.field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+.field-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.full { grid-column: 1 / -1; }
+
+.field-group { display: flex; flex-direction: column; gap: 5px; }
+
+label {
+    font-size: 11px;
+    font-weight: 700;
+    color: #7f8c8d;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+}
+label .req { color: #e74c3c; margin-left: 2px; }
+
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="search"],
+select {
+    padding: 9px 11px;
+    border: 1.5px solid #dde1e7;
+    border-radius: 7px;
+    font-size: 14px;
+    color: #2c3e50;
+    background: #fafbfc;
+    transition: border-color .2s, box-shadow .2s;
+    outline: none;
+    width: 100%;
+    font-family: inherit;
+}
+input:focus, select:focus {
+    border-color: #273c75;
+    box-shadow: 0 0 0 3px rgba(39,60,117,.1);
+    background: #fff;
+}
+
+/* ── Toggles ── */
+.toggles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.toggle-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #f8f9fc;
+    padding: 10px 13px;
+    border-radius: 8px;
+    transition: background .15s;
+}
+.toggle-item:hover { background: #eef0f7; }
+.toggle-label {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: #4a5568;
+}
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 40px;
+    height: 22px;
+    flex-shrink: 0;
+}
+.switch input { opacity: 0; width: 0; height: 0; }
+.sw-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #cbd5e0;
+    border-radius: 22px;
+    transition: .25s;
+}
+.sw-slider::before {
+    content: "";
+    position: absolute;
+    height: 16px;
+    width: 16px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: .25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+.switch input:checked + .sw-slider { background: #27ae60; }
+.switch input:checked + .sw-slider::before { transform: translateX(18px); }
+
+/* ── Boutons ── */
+.form-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    padding-top: 16px;
+    margin-top: 4px;
+    border-top: 1px solid #f0f2f5;
+}
+.btn {
+    padding: 10px 28px;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s, transform .1s;
+    letter-spacing: .02em;
+}
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: #273c75; color: white; }
+.btn-primary:hover { background: #1e2f5e; }
+.btn-danger  { background: #e74c3c; color: white; }
+.btn-danger:hover  { background: #c0392b; }
+.btn-outline { background: white; color: #273c75; border: 1.5px solid #273c75; }
+.btn-outline:hover { background: #f4f6fb; }
+
+/* ── Feedback ── */
+.feedback {
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: none;
+    margin-top: 4px;
+}
+.feedback.show { display: block; }
+.feedback.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+.feedback.error   { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+.feedback.loading { background: #e2f0fb; color: #0c5460; border: 1px solid #bee5eb; }
+
+/* ── Search (onglet Modifier) ── */
+.search-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+.search-row input { flex: 1; }
+.btn-search {
+    background: #273c75;
+    color: white;
+    border: none;
+    padding: 9px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background .2s;
+}
+.btn-search:hover { background: #1e2f5e; }
+
+.search-results {
+    border: 1.5px solid #dde1e7;
+    border-radius: 8px;
+    max-height: 210px;
+    overflow-y: auto;
+    margin-bottom: 18px;
+    display: none;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,.08);
+}
+.search-results.open { display: block; }
+.sr-item {
+    padding: 10px 14px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f2f5;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background .12s;
+}
+.sr-item:last-child { border-bottom: none; }
+.sr-item:hover { background: #f4f6fb; }
+.sr-item strong { color: #273c75; }
+.sr-siret { font-family: monospace; font-size: 12px; color: #999; margin-left: auto; }
+
+/* ── Onglet Supprimer ── */
+.danger-zone {
+    border: 2px solid #f5c6cb;
+    border-radius: 12px;
+    padding: 28px;
+    background: #fff9f9;
+}
+.danger-zone .card-title { color: #c0392b; border-bottom-color: #f5c6cb; }
+.danger-hint { font-size: 13px; color: #888; margin-bottom: 18px; }
+
+/* ── Spinner ── */
+.spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+    margin-right: 6px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="header">
+    <a href="index.html" class="back-btn">⬅ Retour</a>
+    <h1>👤 Gestion des clients</h1>
+</div>
+
+<div class="tabs-bar">
+    <button class="tab-btn active" onclick="showTab('creer', this)">➕ Créer</button>
+    <button class="tab-btn"        onclick="showTab('modifier', this)">✏️ Modifier</button>
+    <button class="tab-btn"        onclick="showTab('supprimer', this)">🗑 Supprimer</button>
+</div>
+
+<div class="container">
+
+<!-- ══════════════════════════════════════════════════════════════
+     ONGLET 1 — CRÉER
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-creer" class="tab-panel active">
+
+    <div class="card">
+        <div class="card-title">Identification</div>
+        <div class="field-grid">
+            <div class="field-group">
+                <label>SIRET <span class="req">*</span></label>
+                <input type="text" id="c-siret" placeholder="14 chiffres" maxlength="14" inputmode="numeric">
+            </div>
+            <div class="field-group">
+                <label>Nom client</label>
+                <input type="text" id="c-nom_client" placeholder="Raison sociale">
+            </div>
+            <div class="field-group">
+                <label>Code client</label>
+                <input type="text" id="c-code_client">
+            </div>
+            <div class="field-group">
+                <label>Structure</label>
+                <select id="c-structure">
+                    <option value="">-- Choisir --</option>
+                    <option>SAS</option>
+                    <option>SARL</option>
+                    <option>EI</option>
+                    <option>ASSO</option>
+                    <option>SCI</option>
+                </select>
+            </div>
+            <div class="field-group">
+                <label>Année</label>
+                <input type="text" id="c-annee" placeholder="ex : 2024">
+            </div>
+            <div class="field-group">
+                <label>Mode d'entrée</label>
+                <input type="text" id="c-mode_dentree" placeholder="ex : Recommandation">
+            </div>
+            <div class="field-group">
+                <label>Date d'entrée</label>
+                <input type="date" id="c-date_entree">
+            </div>
+            <div class="field-group">
+                <label>Date de clôture</label>
+                <input type="date" id="c-date_de_cloture">
+            </div>
+            <div class="field-group">
+                <label>Anniversaire</label>
+                <input type="date" id="c-anniversaire">
+            </div>
+            <div class="field-group">
+                <label>Achat / Revente</label>
+                <input type="text" id="c-achat_revente">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Contact</div>
+        <div class="field-grid cols-3">
+            <div class="field-group">
+                <label>Contact</label>
+                <input type="text" id="c-contact" placeholder="Nom du contact">
+            </div>
+            <div class="field-group">
+                <label>Email</label>
+                <input type="email" id="c-e_mail" placeholder="email@exemple.fr">
+            </div>
+            <div class="field-group">
+                <label>Téléphone</label>
+                <input type="tel" id="c-tel" placeholder="06 00 00 00 00">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Équipe &amp; Honoraires</div>
+        <div class="field-grid">
+            <div class="field-group">
+                <label>Collaborateur</label>
+                <input type="text" id="c-collaborateur">
+            </div>
+            <div class="field-group">
+                <label>Assistant</label>
+                <input type="text" id="c-assistant">
+            </div>
+            <div class="field-group">
+                <label>Honoraires comptabilité (€)</label>
+                <input type="number" id="c-honoraires_cpta" step="0.01" min="0">
+            </div>
+            <div class="field-group">
+                <label>Temps passé (h)</label>
+                <input type="number" id="c-temps_passe" step="0.5" min="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Codes administratifs</div>
+        <div class="field-grid">
+            <div class="field-group">
+                <label>Code impôt gouv</label>
+                <input type="text" id="c-code_impot_gouv">
+            </div>
+            <div class="field-group">
+                <label>Code URSSAF</label>
+                <input type="text" id="c-code_urssaf">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-title">Missions &amp; Déclarations</div>
+        <div class="toggles-grid" id="toggles-creer"></div>
+    </div>
+
+    <div id="feedback-creer" class="feedback"></div>
+    <div class="form-footer">
+        <button class="btn btn-outline" onclick="resetForm('c')">Réinitialiser</button>
+        <button class="btn btn-primary" id="btn-creer" onclick="createClient()">➕ Créer le client</button>
+    </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ONGLET 2 — MODIFIER
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-modifier" class="tab-panel">
+
+    <div class="card">
+        <div class="card-title">Rechercher un client</div>
+        <div class="search-row">
+            <input type="search" id="m-search" placeholder="🔍 Nom ou SIRET..." oninput="searchClients()">
+        </div>
+        <div class="search-results" id="search-results"></div>
+
+        <div id="m-selected-info" style="display:none; margin-bottom:16px; padding:10px 14px; background:#e8f0fe; border-radius:8px; font-size:14px; color:#273c75; font-weight:600;">
+            Client sélectionné : <span id="m-selected-label"></span>
+        </div>
+    </div>
+
+    <div id="m-form-wrapper" style="display:none;">
+
+        <div class="card">
+            <div class="card-title">Identification</div>
+            <div class="field-grid">
+                <div class="field-group">
+                    <label>SIRET (non modifiable)</label>
+                    <input type="text" id="m-siret" readonly style="background:#f1f2f6; color:#888; cursor:not-allowed;">
+                </div>
+                <div class="field-group">
+                    <label>Nom client</label>
+                    <input type="text" id="m-nom_client">
+                </div>
+                <div class="field-group">
+                    <label>Code client</label>
+                    <input type="text" id="m-code_client">
+                </div>
+                <div class="field-group">
+                    <label>Structure</label>
+                    <select id="m-structure">
+                        <option value="">-- Choisir --</option>
+                        <option>SAS</option>
+                        <option>SARL</option>
+                        <option>EI</option>
+                        <option>ASSO</option>
+                        <option>SCI</option>
+                    </select>
+                </div>
+                <div class="field-group">
+                    <label>Année</label>
+                    <input type="text" id="m-annee">
+                </div>
+                <div class="field-group">
+                    <label>Mode d'entrée</label>
+                    <input type="text" id="m-mode_dentree">
+                </div>
+                <div class="field-group">
+                    <label>Date d'entrée</label>
+                    <input type="date" id="m-date_entree">
+                </div>
+                <div class="field-group">
+                    <label>Date de clôture</label>
+                    <input type="date" id="m-date_de_cloture">
+                </div>
+                <div class="field-group">
+                    <label>Anniversaire</label>
+                    <input type="date" id="m-anniversaire">
+                </div>
+                <div class="field-group">
+                    <label>Achat / Revente</label>
+                    <input type="text" id="m-achat_revente">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Contact</div>
+            <div class="field-grid cols-3">
+                <div class="field-group">
+                    <label>Contact</label>
+                    <input type="text" id="m-contact">
+                </div>
+                <div class="field-group">
+                    <label>Email</label>
+                    <input type="email" id="m-e_mail">
+                </div>
+                <div class="field-group">
+                    <label>Téléphone</label>
+                    <input type="tel" id="m-tel">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Équipe &amp; Honoraires</div>
+            <div class="field-grid">
+                <div class="field-group">
+                    <label>Collaborateur</label>
+                    <input type="text" id="m-collaborateur">
+                </div>
+                <div class="field-group">
+                    <label>Assistant</label>
+                    <input type="text" id="m-assistant">
+                </div>
+                <div class="field-group">
+                    <label>Honoraires comptabilité (€)</label>
+                    <input type="number" id="m-honoraires_cpta" step="0.01" min="0">
+                </div>
+                <div class="field-group">
+                    <label>Temps passé (h)</label>
+                    <input type="number" id="m-temps_passe" step="0.5" min="0">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Codes administratifs</div>
+            <div class="field-grid">
+                <div class="field-group">
+                    <label>Code impôt gouv</label>
+                    <input type="text" id="m-code_impot_gouv">
+                </div>
+                <div class="field-group">
+                    <label>Code URSSAF</label>
+                    <input type="text" id="m-code_urssaf">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Missions &amp; Déclarations</div>
+            <div class="toggles-grid" id="toggles-modifier"></div>
+        </div>
+
+        <div id="feedback-modifier" class="feedback"></div>
+        <div class="form-footer">
+            <button class="btn btn-outline" onclick="clearModifySelection()">Changer de client</button>
+            <button class="btn btn-primary" id="btn-modifier" onclick="updateClient()">💾 Enregistrer</button>
+        </div>
+
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     ONGLET 3 — SUPPRIMER
+═══════════════════════════════════════════════════════════════ -->
+<div id="tab-supprimer" class="tab-panel">
+
+    <div class="danger-zone">
+        <div class="card-title">⚠️ Suppression définitive</div>
+        <p class="danger-hint">Cette action est irréversible. Le client sera supprimé de la base PostgreSQL.</p>
+
+        <div class="search-row" style="margin-bottom:10px;">
+            <input type="search" id="s-search" placeholder="🔍 Rechercher par nom ou SIRET..." oninput="searchClientsDelete()">
+        </div>
+        <div class="search-results" id="search-results-del"></div>
+
+        <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
+            <div class="field-group" style="flex:1; min-width:200px;">
+                <label>SIRET à supprimer</label>
+                <input type="text" id="s-siret" placeholder="14 chiffres" maxlength="14">
+            </div>
+            <div class="field-group" style="min-width:160px;">
+                <label>Nom (confirmation)</label>
+                <input type="text" id="s-nom" placeholder="Nom du client" readonly style="background:#f5f5f5; color:#888;">
+            </div>
+        </div>
+
+        <div id="feedback-supprimer" class="feedback" style="margin-top:14px;"></div>
+
+        <div class="form-footer" style="border-top:1px solid #f5c6cb; margin-top:18px;">
+            <button class="btn btn-danger" id="btn-supprimer" onclick="deleteClient()">🗑 Supprimer définitivement</button>
+        </div>
+    </div>
+
+</div>
+
+</div><!-- /container -->
+
+<script>
+const API_URL = "/api";
+
+// ── Champs toggle partagés entre Créer et Modifier ────────────────────────────
+const TOGGLE_FIELDS = [
+    { id: "liasse",                            label: "Liasse" },
+    { id: "ca12",                              label: "CA12" },
+    { id: "is",                                label: "IS" },
+    { id: "impot_sur_le_revenu",               label: "IR" },
+    { id: "cvae",                              label: "CVAE" },
+    { id: "tvs",                               label: "TVS" },
+    { id: "situation",                         label: "Situation" },
+    { id: "tbb",                               label: "TBB" },
+    { id: "juridique_exceptionnel",            label: "Juridique" },
+    { id: "exo_entre_nouvelle",                label: "Exo entr. nouvelle" },
+    { id: "cotisation_fonciere_des_entreprises", label: "CFE" },
+];
+
+// ── Champs texte/date/number partagés ────────────────────────────────────────
+const TEXT_FIELDS = [
+    "siret","nom_client","code_client","structure","annee","mode_dentree",
+    "date_entree","date_de_cloture","anniversaire","achat_revente",
+    "contact","e_mail","tel","collaborateur","assistant",
+    "honoraires_cpta","temps_passe","code_impot_gouv","code_urssaf",
+];
+
+// ── Initialisation des toggles ────────────────────────────────────────────────
+function buildToggles(containerId, prefix) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = TOGGLE_FIELDS.map(f => `
+        <div class="toggle-item">
+            <span class="toggle-label">${f.label}</span>
+            <label class="switch">
+                <input type="checkbox" id="${prefix}-${f.id}">
+                <span class="sw-slider"></span>
+            </label>
+        </div>
+    `).join('');
+}
+buildToggles('toggles-creer',    'c');
+buildToggles('toggles-modifier', 'm');
+
+// ── Navigation entre onglets ─────────────────────────────────────────────────
+function showTab(name, btn) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    if (btn) btn.classList.add('active');
+    if (name === 'modifier' && !allClients.length) loadAllClients();
+    if (name === 'supprimer' && !allClients.length) loadAllClients();
+}
+
+// ── Cache clients ─────────────────────────────────────────────────────────────
+let allClients = [];
+async function loadAllClients() {
+    try {
+        const res = await fetch(API_URL + "/clients");
+        allClients = await res.json();
+    } catch(e) {
+        console.error("Impossible de charger les clients", e);
+    }
+}
+
+// ── Feedback helper ───────────────────────────────────────────────────────────
+function showFeedback(id, type, msg) {
+    const el = document.getElementById(id);
+    el.className = `feedback show ${type}`;
+    el.textContent = msg;
+    if (type === 'success') setTimeout(() => el.classList.remove('show'), 4000);
+}
+function hideFeedback(id) {
+    document.getElementById(id).classList.remove('show');
+}
+
+// ── Collecte des données d'un formulaire ──────────────────────────────────────
+function collectForm(prefix) {
+    const data = {};
+    TEXT_FIELDS.forEach(field => {
+        if (field === 'siret' && prefix === 'm') return; // siret lu séparément
+        const el = document.getElementById(`${prefix}-${field}`);
+        if (!el) return;
+        const v = el.value.trim();
+        if (v !== '') data[field] = v;
+    });
+    TOGGLE_FIELDS.forEach(f => {
+        const el = document.getElementById(`${prefix}-${f.id}`);
+        if (el) data[f.id] = el.checked;
+    });
+    return data;
+}
+
+// ── Remise à zéro ─────────────────────────────────────────────────────────────
+function resetForm(prefix) {
+    TEXT_FIELDS.forEach(field => {
+        const el = document.getElementById(`${prefix}-${field}`);
+        if (el) el.value = '';
+    });
+    TOGGLE_FIELDS.forEach(f => {
+        const el = document.getElementById(`${prefix}-${f.id}`);
+        if (el) el.checked = false;
+    });
+    hideFeedback(`feedback-${prefix === 'c' ? 'creer' : 'modifier'}`);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 1 — CRÉER
+// ══════════════════════════════════════════════════════════════════════════════
+
+async function createClient() {
+    const siret = document.getElementById('c-siret').value.trim();
+    if (!siret) {
+        showFeedback('feedback-creer', 'error', '⚠️ Le SIRET est obligatoire.');
+        document.getElementById('c-siret').focus();
+        return;
+    }
+    if (!/^\d{14}$/.test(siret)) {
+        showFeedback('feedback-creer', 'error', '⚠️ Le SIRET doit contenir exactement 14 chiffres.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-creer');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Création…';
+    showFeedback('feedback-creer', 'loading', 'Création en cours…');
+
+    const body = { siret, ...collectForm('c') };
+
+    try {
+        const res = await fetch(API_URL + "/client/create", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+            showFeedback('feedback-creer', 'error', `❌ ${json.detail || 'Erreur serveur'}`);
+        } else {
+            showFeedback('feedback-creer', 'success', `✅ Client ${siret} créé avec succès !`);
+            resetForm('c');
+            allClients = []; // invalide le cache
+        }
+    } catch(e) {
+        showFeedback('feedback-creer', 'error', `❌ Erreur réseau : ${e.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '➕ Créer le client';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 2 — MODIFIER
+// ══════════════════════════════════════════════════════════════════════════════
+
+let selectedSiret = null;
+
+function searchClients() {
+    const q = document.getElementById('m-search').value.trim().toLowerCase();
+    const box = document.getElementById('search-results');
+    if (!q || q.length < 2) { box.classList.remove('open'); return; }
+    if (!allClients.length) { loadAllClients().then(() => searchClients()); return; }
+
+    const matches = allClients.filter(c =>
+        (c.nom_client || '').toLowerCase().includes(q) ||
+        (c.siret || '').includes(q)
+    ).slice(0, 8);
+
+    if (!matches.length) {
+        box.innerHTML = '<div class="sr-item" style="color:#999; cursor:default;">Aucun résultat</div>';
+    } else {
+        box.innerHTML = matches.map(c => `
+            <div class="sr-item" onclick="selectClient('${c.siret}')">
+                <strong>${c.nom_client || '—'}</strong>
+                <span class="sr-siret">${c.siret}</span>
+            </div>
+        `).join('');
+    }
+    box.classList.add('open');
+}
+
+async function selectClient(siret) {
+    document.getElementById('search-results').classList.remove('open');
+    document.getElementById('m-search').value = '';
+    showFeedback('feedback-modifier', 'loading', 'Chargement de la fiche…');
+    document.getElementById('m-form-wrapper').style.display = 'none';
+
+    try {
+        const res = await fetch(API_URL + "/client/" + siret);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        selectedSiret = siret;
+
+        // Remplissage des champs texte
+        TEXT_FIELDS.forEach(field => {
+            const el = document.getElementById(`m-${field}`);
+            if (!el) return;
+            const v = data[field];
+            el.value = (v !== null && v !== undefined) ? v : '';
+        });
+
+        // Remplissage des toggles
+        TOGGLE_FIELDS.forEach(f => {
+            const el = document.getElementById(`m-${f.id}`);
+            if (el) el.checked = !!data[f.id];
+        });
+
+        document.getElementById('m-selected-label').textContent =
+            `${data.nom_client || '—'} (${siret})`;
+        document.getElementById('m-selected-info').style.display = 'block';
+        document.getElementById('m-form-wrapper').style.display = 'block';
+        hideFeedback('feedback-modifier');
+
+    } catch(e) {
+        showFeedback('feedback-modifier', 'error', `❌ Impossible de charger le client : ${e.message}`);
+    }
+}
+
+function clearModifySelection() {
+    selectedSiret = null;
+    document.getElementById('m-form-wrapper').style.display = 'none';
+    document.getElementById('m-selected-info').style.display = 'none';
+    hideFeedback('feedback-modifier');
+    resetForm('m');
+}
+
+async function updateClient() {
+    if (!selectedSiret) {
+        showFeedback('feedback-modifier', 'error', '⚠️ Aucun client sélectionné.');
+        return;
+    }
+
+    const btn = document.getElementById('btn-modifier');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Enregistrement…';
+    showFeedback('feedback-modifier', 'loading', 'Enregistrement en cours…');
+
+    const body = { siret: selectedSiret, ...collectForm('m') };
+
+    try {
+        const res = await fetch(API_URL + "/client/update", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+            showFeedback('feedback-modifier', 'error', `❌ ${json.detail || 'Erreur serveur'}`);
+        } else {
+            showFeedback('feedback-modifier', 'success', `✅ Client mis à jour (${json.updated?.length || 0} champ(s) modifié(s)).`);
+            allClients = []; // invalide le cache
+        }
+    } catch(e) {
+        showFeedback('feedback-modifier', 'error', `❌ Erreur réseau : ${e.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '💾 Enregistrer';
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ONGLET 3 — SUPPRIMER
+// ══════════════════════════════════════════════════════════════════════════════
+
+function searchClientsDelete() {
+    const q = document.getElementById('s-search').value.trim().toLowerCase();
+    const box = document.getElementById('search-results-del');
+    if (!q || q.length < 2) { box.classList.remove('open'); return; }
+    if (!allClients.length) { loadAllClients().then(() => searchClientsDelete()); return; }
+
+    const matches = allClients.filter(c =>
+        (c.nom_client || '').toLowerCase().includes(q) ||
+        (c.siret || '').includes(q)
+    ).slice(0, 8);
+
+    box.innerHTML = matches.length
+        ? matches.map(c => `
+            <div class="sr-item" onclick="prefillDelete('${c.siret}', '${(c.nom_client||'').replace(/'/g,"\\'")}')">
+                <strong>${c.nom_client || '—'}</strong>
+                <span class="sr-siret">${c.siret}</span>
+            </div>`).join('')
+        : '<div class="sr-item" style="color:#999;cursor:default;">Aucun résultat</div>';
+
+    box.classList.add('open');
+}
+
+function prefillDelete(siret, nom) {
+    document.getElementById('s-siret').value = siret;
+    document.getElementById('s-nom').value = nom;
+    document.getElementById('search-results-del').classList.remove('open');
+    document.getElementById('s-search').value = '';
+    hideFeedback('feedback-supprimer');
+}
+
+async function deleteClient() {
+    const siret = document.getElementById('s-siret').value.trim();
+    const nom   = document.getElementById('s-nom').value.trim();
+    if (!siret) {
+        showFeedback('feedback-supprimer', 'error', '⚠️ Veuillez renseigner le SIRET.');
+        return;
+    }
+    const label = nom ? `${nom} (${siret})` : siret;
+    if (!confirm(`Supprimer définitivement le client :\n\n${label}\n\nCette action est irréversible.`)) return;
+
+    const btn = document.getElementById('btn-supprimer');
+    btn.disabled = true;
+    btn.textContent = 'Suppression…';
+    showFeedback('feedback-supprimer', 'loading', 'Suppression en cours…');
+
+    try {
+        const res = await fetch(API_URL + "/client/" + encodeURIComponent(siret), {
+            method: "DELETE",
+        });
+        const json = await res.json();
+        if (!res.ok) {
+            showFeedback('feedback-supprimer', 'error', `❌ ${json.detail || 'Erreur serveur'}`);
+        } else {
+            showFeedback('feedback-supprimer', 'success', `✅ Client ${label} supprimé.`);
+            document.getElementById('s-siret').value = '';
+            document.getElementById('s-nom').value = '';
+            document.getElementById('s-search').value = '';
+            allClients = [];
+        }
+    } catch(e) {
+        showFeedback('feedback-supprimer', 'error', `❌ Erreur réseau : ${e.message}`);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '🗑 Supprimer définitivement';
+    }
+}
+
+// ── Fermer les dropdowns au clic extérieur ────────────────────────────────────
+document.addEventListener('click', e => {
+    if (!e.target.closest('#m-search') && !e.target.closest('#search-results'))
+        document.getElementById('search-results').classList.remove('open');
+    if (!e.target.closest('#s-search') && !e.target.closest('#search-results-del'))
+        document.getElementById('search-results-del').classList.remove('open');
+});
+</script>
+</body>
+</html>
