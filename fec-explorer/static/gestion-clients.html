@@ -1030,6 +1030,31 @@ function searchClients() {
     box.classList.add('open');
 }
 
+// Remplit le formulaire Modifier à partir d'un objet client (en mémoire ou API)
+function fillModifyForm(data) {
+    selectedSiret = data.siret;
+
+    TEXT_FIELDS.forEach(field => {
+        const el = document.getElementById(`m-${field}`);
+        if (!el) return;
+        const v = data[field];
+        el.value = (v !== null && v !== undefined) ? String(v) : '';
+    });
+
+    TOGGLE_FIELDS.forEach(f => {
+        const el = document.getElementById(`m-${f.id}`);
+        if (el) el.checked = !!data[f.id];
+    });
+
+    document.getElementById('m-selected-label').textContent =
+        `${data.nom_client || '—'} (${data.siret})`;
+    document.getElementById('m-selected-info').style.display = 'block';
+    document.getElementById('m-form-wrapper').style.display = 'block';
+    hideFeedback('feedback-modifier');
+    // Scroll vers le formulaire
+    document.getElementById('m-form-wrapper').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
 async function selectClient(siret) {
     document.getElementById('search-results').classList.remove('open');
     document.getElementById('m-search').value = '';
@@ -1040,29 +1065,7 @@ async function selectClient(siret) {
         const res = await fetch(API_URL + "/client/" + siret);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
-
-        selectedSiret = siret;
-
-        // Remplissage des champs texte
-        TEXT_FIELDS.forEach(field => {
-            const el = document.getElementById(`m-${field}`);
-            if (!el) return;
-            const v = data[field];
-            el.value = (v !== null && v !== undefined) ? v : '';
-        });
-
-        // Remplissage des toggles
-        TOGGLE_FIELDS.forEach(f => {
-            const el = document.getElementById(`m-${f.id}`);
-            if (el) el.checked = !!data[f.id];
-        });
-
-        document.getElementById('m-selected-label').textContent =
-            `${data.nom_client || '—'} (${siret})`;
-        document.getElementById('m-selected-info').style.display = 'block';
-        document.getElementById('m-form-wrapper').style.display = 'block';
-        hideFeedback('feedback-modifier');
-
+        fillModifyForm(data);
     } catch(e) {
         showFeedback('feedback-modifier', 'error', `❌ Impossible de charger le client : ${e.message}`);
     }
@@ -1355,10 +1358,15 @@ function renderDbTable() {
 }
 
 function dbOpenModify(siret) {
-    // Bascule sur l'onglet Modifier et charge le client
     const btn = document.querySelector('.tab-btn[onclick="showTab(\'modifier\', this)"]');
     showTab('modifier', btn);
-    selectClient(siret);
+    // Utilise les données en cache si disponibles — évite un aller-retour API
+    const cached = allClients.find(c => c.siret === siret);
+    if (cached) {
+        fillModifyForm(cached);
+    } else {
+        selectClient(siret);
+    }
 }
 
 // ── Fermer le dropdown recherche (onglet Modifier) au clic extérieur ──────────
