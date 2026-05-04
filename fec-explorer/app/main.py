@@ -1,7 +1,7 @@
 import os
 import re
 from decimal import Decimal
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 import psycopg2
 import psycopg2.extras
@@ -248,6 +248,73 @@ def delete_client(siret: str):
     except psycopg2.Error as e:
         conn.rollback()
         raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
+@app.post("/api/clients/import", summary="UPSERT en masse d'une liste de clients JSON")
+def import_clients(body: List[Dict[str, Any]] = Body(...)):
+    if not body:
+        raise HTTPException(status_code=400, detail="Liste vide.")
+
+    conn = _get_db_conn()
+    upserted = 0
+    errors: List[str] = []
+
+    try:
+        # Récupère les colonnes valides une seule fois
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'clients'"
+            )
+            valid_cols = {row[0] for row in cur.fetchall()}
+
+        for i, item in enumerate(body):
+            if not isinstance(item, dict):
+                continue
+            siret = str(item.get("siret", "")).strip()
+            if not siret:
+                errors.append(f"Ligne {i + 1} : siret manquant")
+                continue
+
+            fields = {
+                k: v for k, v in item.items()
+                if _COL_RE.match(str(k)) and k in valid_cols
+                and v is not None and str(v).strip() != ""
+            }
+            if not fields:
+                errors.append(f"Ligne {i + 1} ({siret}) : aucun champ valide")
+                continue
+
+            cols         = ", ".join(f'"{k}"' for k in fields)
+            placeholders = ", ".join("%s" for _ in fields)
+            updates      = ", ".join(
+                f'"{k}" = EXCLUDED."{k}"' for k in fields if k != "siret"
+            )
+            values = list(fields.values())
+
+            try:
+                with conn.cursor() as cur:
+                    if updates:
+                        cur.execute(
+                            f"INSERT INTO clients ({cols}) VALUES ({placeholders}) "
+                            f"ON CONFLICT (siret) DO UPDATE SET {updates}",
+                            values,
+                        )
+                    else:
+                        cur.execute(
+                            f"INSERT INTO clients ({cols}) VALUES ({placeholders}) "
+                            f"ON CONFLICT (siret) DO NOTHING",
+                            values,
+                        )
+                conn.commit()
+                upserted += 1
+            except psycopg2.Error as e:
+                conn.rollback()
+                errors.append(f"{siret} : {e.pgerror or str(e)}")
+
+        return {"success": True, "upserted": upserted, "errors": errors}
     finally:
         conn.close()
 

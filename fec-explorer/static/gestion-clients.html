@@ -495,6 +495,123 @@ input:focus, select:focus {
     white-space: nowrap;
 }
 
+/* ── Boutons Export / Import ── */
+.btn-export, .btn-import {
+    border: none;
+    padding: 8px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+    transition: background .15s, transform .1s;
+}
+.btn-export:active, .btn-import:active { transform: translateY(1px); }
+.btn-export { background: #27ae60; color: white; }
+.btn-export:hover { background: #1e8449; }
+.btn-import { background: #2980b9; color: white; }
+.btn-import:hover { background: #1f618d; }
+
+/* ── Modal Import ── */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.5);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+    background: white;
+    border-radius: 14px;
+    padding: 28px;
+    max-width: 860px;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+    animation: modal-in .2s ease;
+}
+@keyframes modal-in {
+    from { transform: translateY(18px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+}
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid #f0f2f5;
+}
+.modal-header h3 { color: #273c75; font-size: 1.05rem; font-weight: 700; }
+.modal-close {
+    background: none;
+    border: none;
+    font-size: 20px;
+    color: #888;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    line-height: 1;
+    transition: background .15s;
+}
+.modal-close:hover { background: #f0f2f5; color: #2c3e50; }
+.modal-info {
+    font-size: 14px;
+    color: #555;
+    margin-bottom: 14px;
+    padding: 10px 14px;
+    background: #f0f7ff;
+    border-left: 4px solid #2980b9;
+    border-radius: 6px;
+}
+.modal-info strong { color: #273c75; }
+.modal-preview-wrap {
+    overflow-x: auto;
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 14px;
+}
+.modal-preview-table {
+    border-collapse: collapse;
+    font-size: 12px;
+    width: max-content;
+    min-width: 100%;
+}
+.modal-preview-table thead th {
+    background: #273c75;
+    color: white;
+    padding: 7px 12px;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+}
+.modal-preview-table tbody td {
+    padding: 6px 12px;
+    border-bottom: 1px solid #f0f2f5;
+    white-space: nowrap;
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #2c3e50;
+}
+.modal-preview-table tbody tr:nth-child(even) { background: #f8f9fc; }
+.modal-more { font-size: 12px; color: #888; margin-top: 6px; }
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 14px;
+    border-top: 1px solid #f0f2f5;
+}
+
 /* ── Skeleton loader ── */
 .skeleton-cell {
     height: 13px;
@@ -876,6 +993,8 @@ input:focus, select:focus {
             <span class="db-active-filters" id="db-active-filters"></span>
             <span class="db-info" id="db-info">—</span>
             <button class="btn-reset-filters" onclick="dbResetFilters()">✕ Réinitialiser</button>
+            <button class="btn-export" onclick="dbExportCSV()">⬇ Export CSV</button>
+            <button class="btn-import" onclick="triggerImport()">⬆ Import CSV</button>
         </div>
 
         <div class="db-filters">
@@ -1544,7 +1663,214 @@ document.addEventListener('click', e => {
     if (!e.target.closest('#m-search') && !e.target.closest('#search-results'))
         document.getElementById('search-results').classList.remove('open');
 });
+
+// ══════════════════════════════════════════════════════════════════════════════
+// EXPORT CSV
+// ══════════════════════════════════════════════════════════════════════════════
+
+function dbExportCSV() {
+    if (!dbAllRows.length) { alert("Aucune donnée à exporter."); return; }
+    const cols   = dbColumns.length ? dbColumns : Object.keys(dbAllRows[0]);
+    const header = cols.map(c => '"' + c.replace(/"/g, '""') + '"').join(';');
+    const rows   = dbAllRows.map(r =>
+        cols.map(c => {
+            let v = r[c] ?? '';
+            if (typeof v === 'boolean') v = v ? 'oui' : 'non';
+            return '"' + String(v).replace(/"/g, '""') + '"';
+        }).join(';')
+    );
+    const csv  = '﻿' + [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `clients_export_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// IMPORT CSV
+// ══════════════════════════════════════════════════════════════════════════════
+
+let importRows = [];
+
+function triggerImport() {
+    document.getElementById('csv-file-input').click();
+}
+
+// Parseur CSV robuste : gère les champs entre guillemets, séparateurs ; et ,
+function parseCSV(text) {
+    if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1); // BOM
+    const lines = text.split(/\r?\n/).filter(l => l.trim());
+    if (!lines.length) return { headers: [], rows: [] };
+
+    const sep = lines[0].includes(';') ? ';' : ',';
+
+    function parseLine(line) {
+        const result = [];
+        let field = '', inQ = false;
+        for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (ch === '"') {
+                if (inQ && line[i + 1] === '"') { field += '"'; i++; }
+                else inQ = !inQ;
+            } else if (ch === sep && !inQ) { result.push(field); field = ''; }
+            else field += ch;
+        }
+        result.push(field);
+        return result;
+    }
+
+    const headers = parseLine(lines[0]);
+    const rows = lines.slice(1).map(line => {
+        const vals = parseLine(line);
+        const obj = {};
+        headers.forEach((h, i) => { obj[h] = (vals[i] ?? '').trim(); });
+        return obj;
+    });
+    return { headers, rows };
+}
+
+function handleCSVFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    event.target.value = '';
+    const reader = new FileReader();
+    reader.onload = e => {
+        const { headers, rows } = parseCSV(e.target.result);
+        importRows = rows.filter(r => (r.siret || '').trim());
+        if (!importRows.length) {
+            alert("Aucune ligne avec SIRET détectée dans ce fichier.");
+            return;
+        }
+        openImportModal(headers, importRows);
+    };
+    reader.readAsText(file, 'UTF-8');
+}
+
+function openImportModal(headers, rows) {
+    // Info
+    document.getElementById('import-modal-info').innerHTML =
+        `<strong>${rows.length} ligne(s)</strong> détectée(s) &mdash; ` +
+        `<span>${headers.length} colonne(s)</span>. ` +
+        `L'import effectue un <strong>UPSERT</strong> : création si le SIRET est nouveau, ` +
+        `mise à jour sinon. Les cellules vides ne modifient pas l'existant.`;
+
+    // Aperçu des 5 premières lignes, 8 colonnes max
+    const previewCols = headers.slice(0, 8);
+    const previewRows = rows.slice(0, 5);
+
+    document.getElementById('import-preview-head').innerHTML =
+        '<tr>' + previewCols.map(h =>
+            `<th>${h.replace(/</g,'&lt;')}</th>`
+        ).join('') + '</tr>';
+
+    document.getElementById('import-preview-body').innerHTML =
+        previewRows.map(r =>
+            '<tr>' + previewCols.map(h => {
+                const v = String(r[h] ?? '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                return `<td title="${v}">${v}</td>`;
+            }).join('') + '</tr>'
+        ).join('');
+
+    document.getElementById('import-more').textContent =
+        rows.length > 5 ? `… et ${rows.length - 5} ligne(s) de plus` : '';
+
+    document.getElementById('import-feedback').classList.remove('show');
+    document.getElementById('btn-confirm-import').disabled = false;
+    document.getElementById('btn-confirm-import').textContent = '⬆ Confirmer l\'import';
+    document.getElementById('import-modal').classList.add('open');
+}
+
+function closeImportModal() {
+    document.getElementById('import-modal').classList.remove('open');
+    importRows = [];
+}
+
+async function confirmImport() {
+    if (!importRows.length) return;
+
+    // Convertit "oui"/"non" → boolean pour les champs toggle avant envoi
+    const toggleIds = TOGGLE_FIELDS.map(f => f.id);
+    const payload = importRows.map(r => {
+        const row = { ...r };
+        toggleIds.forEach(id => {
+            if (!(id in row)) return;
+            const v = String(row[id]).toLowerCase().trim();
+            if      (v === 'oui'  || v === 'true'  || v === '1') row[id] = true;
+            else if (v === 'non'  || v === 'false' || v === '0') row[id] = false;
+            else delete row[id];
+        });
+        return row;
+    });
+
+    const btn = document.getElementById('btn-confirm-import');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>Import…';
+    showImportFeedback('loading', `Import de ${payload.length} ligne(s) en cours…`);
+
+    try {
+        const res  = await fetch(API_URL + "/clients/import", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+            showImportFeedback('error', `❌ ${json.detail || 'Erreur serveur'}`);
+        } else {
+            let msg = `✅ ${json.upserted} ligne(s) importée(s).`;
+            if (json.errors?.length)
+                msg += `  ⚠️ ${json.errors.length} erreur(s) : ${json.errors.slice(0, 3).join(' | ')}`;
+            showImportFeedback('success', msg);
+            allClients = [];
+            setTimeout(() => { closeImportModal(); loadBaseTab(); }, 2800);
+        }
+    } catch(e) {
+        showImportFeedback('error', `❌ Erreur réseau : ${e.message}`);
+        btn.disabled = false;
+        btn.textContent = '⬆ Confirmer l\'import';
+    }
+}
+
+function showImportFeedback(type, msg) {
+    const el = document.getElementById('import-feedback');
+    el.className = `feedback show ${type}`;
+    el.textContent = msg;
+}
+
+// Ferme la modal au clic sur le fond
+document.getElementById('import-modal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeImportModal();
+});
 </script>
+
+<!-- ── Modal Import CSV ── -->
+<div class="modal-overlay" id="import-modal">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h3>⬆ Import CSV</h3>
+            <button class="modal-close" onclick="closeImportModal()">✕</button>
+        </div>
+        <div id="import-modal-info" class="modal-info"></div>
+        <div class="modal-preview-wrap">
+            <table class="modal-preview-table">
+                <thead id="import-preview-head"></thead>
+                <tbody id="import-preview-body"></tbody>
+            </table>
+        </div>
+        <p class="modal-more" id="import-more"></p>
+        <div id="import-feedback" class="feedback"></div>
+        <div class="modal-footer">
+            <button class="btn btn-outline" onclick="closeImportModal()">Annuler</button>
+            <button class="btn btn-primary" id="btn-confirm-import" onclick="confirmImport()">
+                ⬆ Confirmer l'import
+            </button>
+        </div>
+    </div>
+</div>
+<input type="file" id="csv-file-input" accept=".csv" style="display:none" onchange="handleCSVFile(event)">
 
 <datalist id="list-collaborateur"></datalist>
 <datalist id="list-assistant"></datalist>
