@@ -373,17 +373,17 @@ function checkAnniversaires(data) {
         const div = document.getElementById("alert-anniv");
         div.style.display = "block";
         div.innerHTML = "🎂 Anniversaire aujourd’hui : " +
-            annivs.map(a => a["nom client"]).join(", ");
+            annivs.map(a => a.nom_client).join(", ");
     }
 }
 
 /* 🔥 FILTRES (inchangé) */
 let filtersConfig = [
-    { field: "collaborateur", label: "Collaborateur" },
-    { field: "structure", label: "Structure" },
-    { field: "activite R", label: "Activité" },
-    { field: "assistant", label: "Assistant" },
-    { field: "date de cloture", label: "Date de clôture" }
+    { field: "collaborateur",  label: "Collaborateur" },
+    { field: "structure",      label: "Structure" },
+    { field: "activite_r",     label: "Activité" },
+    { field: "assistant",      label: "Assistant" },
+    { field: "date_de_cloture", label: "Date de clôture" }
 ];
 
 function buildFilters() {
@@ -491,11 +491,11 @@ function displayClients(data) {
         const score = parseFloat(c["rentabilite"]) || 0;
 
         table.innerHTML += `
-        <tr onclick="viewClient('${c.id}')">
+        <tr onclick="viewClient('${c.siret}')">
 
-            <td>${c["code client"] || ""}</td>
-            <td><strong>${c["nom client"] || ""}</strong></td>
-            <td>${c["date de cloture"] || ""}</td>
+            <td>${c.code_client || ""}</td>
+            <td><strong>${c.nom_client || ""}</strong></td>
+            <td>${c.date_de_cloture || ""}</td>
             <td>${c["structure"] || ""}</td>
 
             <td>
@@ -503,20 +503,20 @@ function displayClients(data) {
                 ${anciennete < 1 ? '<span class="alert">⚠️</span><span class="alert-badge">Nouveau</span>' : ''}
             </td>
 
-            <td>${c["honoraires cpta"] || ""}</td>
+            <td>${c.honoraires_cpta || ""}</td>
             <td>${c["collaborateur"] || ""}</td>
             <td>${c["assistant"] || ""}</td>
 
-            <td>${c["CA R"] || ""}</td>
-            <td>${c["resultat R"] || ""}</td>
-            <td>${c["activite R"] || ""}</td>
+            <td>${c.ca_r || ""}</td>
+            <td>${c.resultat || ""}</td>
+            <td>${c.activite_r || ""}</td>
 
             <td style="font-weight:bold; color:${getColor(score)};">
                 ${score.toFixed(2)}
             </td>
 
             <td>
-                <button class="btn" onclick="event.stopPropagation(); viewClient('${c.id}')">
+                <button class="btn" onclick="event.stopPropagation(); viewClient('${c.siret}')">
                     Voir
                 </button>
             </td>
@@ -551,7 +551,7 @@ document.getElementById("search").addEventListener("input", function(e) {
     const value = e.target.value.toLowerCase();
 
     const filtered = clientsData.filter(c =>
-        (c["nom client"] || "").toLowerCase().includes(value)
+        (c.nom_client || "").toLowerCase().includes(value)
     );
 
     displayClients(filtered);
@@ -559,45 +559,45 @@ document.getElementById("search").addEventListener("input", function(e) {
 
 function sortByHonos() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseFloat(b["honoraires cpta"]) || 0) -
-        (parseFloat(a["honoraires cpta"]) || 0)
+        (parseFloat(b.honoraires_cpta) || 0) -
+        (parseFloat(a.honoraires_cpta) || 0)
     );
     displayClients(sorted);
 }
 
 function sortByCA() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseFloat(b["CA R"]) || 0) -
-        (parseFloat(a["CA R"]) || 0)
+        (parseFloat(b.ca_r) || 0) -
+        (parseFloat(a.ca_r) || 0)
     );
     displayClients(sorted);
 }
 
 function sortByResultat() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseFloat(b["resultat R"]) || 0) -
-        (parseFloat(a["resultat R"]) || 0)
+        (parseFloat(b.resultat) || 0) -
+        (parseFloat(a.resultat) || 0)
     );
     displayClients(sorted);
 }
 
-function viewClient(id) {
-    window.location.href = "client.html?id=" + id;
+function viewClient(siret) {
+    window.location.href = "client.html?siret=" + siret;
 }
 
 function exportIndexCSV() {
     exportCSV(displayedClients, 'clients.csv', [
-        { label: "Code",          field: "code client" },
-        { label: "Nom",           field: "nom client" },
-        { label: "Clôture",       field: "date de cloture" },
+        { label: "Code",          field: "code_client" },
+        { label: "Nom",           field: "nom_client" },
+        { label: "Clôture",       field: "date_de_cloture" },
         { label: "Structure",     field: "structure" },
         { label: "Ancienneté",    field: "ancienneté" },
-        { label: "Honoraires",    field: "honoraires cpta" },
+        { label: "Honoraires",    field: "honoraires_cpta" },
         { label: "Collaborateur", field: "collaborateur" },
         { label: "Assistant",     field: "assistant" },
-        { label: "CA",            field: "CA R" },
-        { label: "Résultat",      field: "resultat R" },
-        { label: "Activité",      field: "activite R" },
+        { label: "CA",            field: "ca_r" },
+        { label: "Résultat",      field: "resultat" },
+        { label: "Activité",      field: "activite_r" },
         { label: "Rentabilité",   field: "rentabilite" }
     ]);
 }
@@ -606,7 +606,7 @@ function updateDashboard(data) {
     const total = data.length;
 
     const totalHonos = data.reduce((sum, c) => {
-        return sum + (parseFloat(c["honoraires cpta"]) || 0);
+        return sum + (parseFloat(c.honoraires_cpta) || 0);
     }, 0);
 
     const avg = total ? totalHonos / total : 0;
