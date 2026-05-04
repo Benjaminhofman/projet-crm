@@ -274,14 +274,60 @@ input:focus, select:focus {
 .sr-siret { font-family: monospace; font-size: 12px; color: #999; margin-left: auto; }
 
 /* ── Onglet Supprimer ── */
-.danger-zone {
-    border: 2px solid #f5c6cb;
-    border-radius: 12px;
-    padding: 28px;
-    background: #fff9f9;
+.danger-hint { font-size: 13px; color: #888; margin-bottom: 16px; }
+
+.del-toolbar {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
 }
-.danger-zone .card-title { color: #c0392b; border-bottom-color: #f5c6cb; }
-.danger-hint { font-size: 13px; color: #888; margin-bottom: 18px; }
+.del-toolbar input { flex: 1; min-width: 200px; }
+.del-counter {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    white-space: nowrap;
+    padding: 6px 12px;
+    background: #f0f2f5;
+    border-radius: 6px;
+}
+.del-table-wrapper {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    max-height: 520px;
+    overflow-y: auto;
+}
+.del-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+.del-table thead th {
+    background: #273c75;
+    color: white;
+    padding: 10px 12px;
+    text-align: left;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+.del-table thead th:first-child { cursor: default; width: 44px; }
+.del-table thead th:hover:not(:first-child) { background: #1e2f5e; }
+.del-table tbody tr { border-bottom: 1px solid #f0f2f5; transition: background .1s; }
+.del-table tbody tr:last-child { border-bottom: none; }
+.del-table tbody tr:hover { background: #f4f6fb; }
+.del-table tbody tr.selected { background: #fef3f2; }
+.del-table td { padding: 9px 12px; vertical-align: middle; }
+.del-table td code { font-family: monospace; font-size: 12px; color: #888; }
+.del-table td strong { color: #273c75; }
+.del-table input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; accent-color: #e74c3c; }
+.del-empty { text-align: center; padding: 32px; color: #aaa; font-size: 14px; }
 
 /* ── Spinner ── */
 .spinner {
@@ -582,30 +628,35 @@ input:focus, select:focus {
 ═══════════════════════════════════════════════════════════════ -->
 <div id="tab-supprimer" class="tab-panel">
 
-    <div class="danger-zone">
-        <div class="card-title">⚠️ Suppression définitive</div>
-        <p class="danger-hint">Cette action est irréversible. Le client sera supprimé de la base PostgreSQL.</p>
+    <div class="card">
+        <div class="card-title" style="color:#c0392b; border-bottom-color:#f5c6cb;">🗑 Suppression de clients</div>
+        <p class="danger-hint">Cochez les clients à supprimer puis cliquez sur "Supprimer la sélection". Cette action est irréversible.</p>
 
-        <div class="search-row" style="margin-bottom:10px;">
-            <input type="search" id="s-search" placeholder="🔍 Rechercher par nom ou SIRET..." oninput="searchClientsDelete()">
-        </div>
-        <div class="search-results" id="search-results-del"></div>
-
-        <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap;">
-            <div class="field-group" style="flex:1; min-width:200px;">
-                <label>SIRET à supprimer</label>
-                <input type="text" id="s-siret" placeholder="14 chiffres" maxlength="14">
-            </div>
-            <div class="field-group" style="min-width:160px;">
-                <label>Nom (confirmation)</label>
-                <input type="text" id="s-nom" placeholder="Nom du client" readonly style="background:#f5f5f5; color:#888;">
-            </div>
+        <div class="del-toolbar">
+            <input type="search" id="s-filter" placeholder="🔍 Filtrer par nom ou SIRET..." oninput="filterDeleteTable()">
+            <span class="del-counter" id="del-counter">0 sélectionné(s)</span>
+            <button class="btn btn-danger" id="btn-supprimer" onclick="deleteSelection()" disabled>
+                🗑 Supprimer la sélection
+            </button>
         </div>
 
-        <div id="feedback-supprimer" class="feedback" style="margin-top:14px;"></div>
+        <div id="feedback-supprimer" class="feedback" style="margin-bottom:12px;"></div>
 
-        <div class="form-footer" style="border-top:1px solid #f5c6cb; margin-top:18px;">
-            <button class="btn btn-danger" id="btn-supprimer" onclick="deleteClient()">🗑 Supprimer définitivement</button>
+        <div class="del-table-wrapper">
+            <table class="del-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="del-check-all" onchange="toggleAllDelete(this)" title="Tout sélectionner"></th>
+                        <th onclick="sortDeleteTable('siret')">SIRET</th>
+                        <th onclick="sortDeleteTable('nom_client')">Nom client</th>
+                        <th onclick="sortDeleteTable('collaborateur')">Collaborateur</th>
+                        <th onclick="sortDeleteTable('ca_r')">CA</th>
+                    </tr>
+                </thead>
+                <tbody id="del-tbody">
+                    <tr><td colspan="5" class="del-empty">Chargement…</td></tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -662,7 +713,7 @@ function showTab(name, btn) {
     document.getElementById('tab-' + name).classList.add('active');
     if (btn) btn.classList.add('active');
     if (name === 'modifier' && !allClients.length) loadAllClients();
-    if (name === 'supprimer' && !allClients.length) loadAllClients();
+    if (name === 'supprimer') loadDeleteTable();
 }
 
 // ── Cache clients ─────────────────────────────────────────────────────────────
@@ -876,79 +927,126 @@ async function updateClient() {
 // ONGLET 3 — SUPPRIMER
 // ══════════════════════════════════════════════════════════════════════════════
 
-function searchClientsDelete() {
-    const q = document.getElementById('s-search').value.trim().toLowerCase();
-    const box = document.getElementById('search-results-del');
-    if (!q || q.length < 2) { box.classList.remove('open'); return; }
-    if (!allClients.length) { loadAllClients().then(() => searchClientsDelete()); return; }
+let delFiltered = [];
+let delSortCol  = 'nom_client';
+let delSortAsc  = true;
 
-    const matches = allClients.filter(c =>
+async function loadDeleteTable() {
+    if (!allClients.length) await loadAllClients();
+    delFiltered = [...allClients];
+    document.getElementById('s-filter').value = '';
+    document.getElementById('del-check-all').checked = false;
+    renderDeleteTable();
+}
+
+function filterDeleteTable() {
+    const q = document.getElementById('s-filter').value.trim().toLowerCase();
+    delFiltered = allClients.filter(c =>
+        !q ||
         (c.nom_client || '').toLowerCase().includes(q) ||
         (c.siret || '').includes(q)
-    ).slice(0, 8);
-
-    box.innerHTML = matches.length
-        ? matches.map(c => `
-            <div class="sr-item" onclick="prefillDelete('${c.siret}', '${(c.nom_client||'').replace(/'/g,"\\'")}')">
-                <strong>${c.nom_client || '—'}</strong>
-                <span class="sr-siret">${c.siret}</span>
-            </div>`).join('')
-        : '<div class="sr-item" style="color:#999;cursor:default;">Aucun résultat</div>';
-
-    box.classList.add('open');
+    );
+    document.getElementById('del-check-all').checked = false;
+    renderDeleteTable();
 }
 
-function prefillDelete(siret, nom) {
-    document.getElementById('s-siret').value = siret;
-    document.getElementById('s-nom').value = nom;
-    document.getElementById('search-results-del').classList.remove('open');
-    document.getElementById('s-search').value = '';
-    hideFeedback('feedback-supprimer');
+function sortDeleteTable(col) {
+    if (delSortCol === col) delSortAsc = !delSortAsc;
+    else { delSortCol = col; delSortAsc = true; }
+    renderDeleteTable();
 }
 
-async function deleteClient() {
-    const siret = document.getElementById('s-siret').value.trim();
-    const nom   = document.getElementById('s-nom').value.trim();
-    if (!siret) {
-        showFeedback('feedback-supprimer', 'error', '⚠️ Veuillez renseigner le SIRET.');
+function renderDeleteTable() {
+    const sorted = [...delFiltered].sort((a, b) => {
+        const va = String(a[delSortCol] ?? '');
+        const vb = String(b[delSortCol] ?? '');
+        return va.localeCompare(vb, 'fr', { numeric: true }) * (delSortAsc ? 1 : -1);
+    });
+
+    const fmt = n => n ? Number(n).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' €' : '—';
+    const arrow = col => delSortCol === col ? (delSortAsc ? ' ▲' : ' ▼') : '';
+
+    // Mise à jour des flèches de tri dans les en-têtes
+    ['siret','nom_client','collaborateur','ca_r'].forEach(col => {
+        const th = document.querySelector(`.del-table th[onclick="sortDeleteTable('${col}')"]`);
+        if (th) th.textContent = { siret:'SIRET', nom_client:'Nom client', collaborateur:'Collaborateur', ca_r:'CA' }[col] + arrow(col);
+    });
+
+    const tbody = document.getElementById('del-tbody');
+    if (!sorted.length) {
+        tbody.innerHTML = '<tr><td colspan="5" class="del-empty">Aucun client trouvé.</td></tr>';
+        updateDelCounter();
         return;
     }
-    const label = nom ? `${nom} (${siret})` : siret;
-    if (!confirm(`Supprimer définitivement le client :\n\n${label}\n\nCette action est irréversible.`)) return;
+
+    tbody.innerHTML = sorted.map(c => `
+        <tr>
+            <td><input type="checkbox" class="del-check" value="${c.siret}" onchange="updateDelCounter()"></td>
+            <td><code>${c.siret || ''}</code></td>
+            <td><strong>${c.nom_client || '—'}</strong></td>
+            <td>${c.collaborateur || '—'}</td>
+            <td>${fmt(c.ca_r)}</td>
+        </tr>
+    `).join('');
+
+    updateDelCounter();
+}
+
+function toggleAllDelete(cb) {
+    document.querySelectorAll('.del-check').forEach(c => c.checked = cb.checked);
+    updateDelCounter();
+}
+
+function updateDelCounter() {
+    const n = document.querySelectorAll('.del-check:checked').length;
+    document.getElementById('del-counter').textContent = `${n} sélectionné(s)`;
+    document.getElementById('btn-supprimer').disabled = n === 0;
+}
+
+async function deleteSelection() {
+    const checked = [...document.querySelectorAll('.del-check:checked')];
+    if (!checked.length) return;
+
+    const sirets = checked.map(cb => cb.value);
+    const lines  = sirets.map(s => {
+        const c = allClients.find(x => x.siret === s);
+        return `• ${c ? (c.nom_client || s) + ' (' + s + ')' : s}`;
+    });
+
+    if (!confirm(`Supprimer définitivement ${sirets.length} client(s) ?\n\n${lines.join('\n')}\n\nCette action est irréversible.`)) return;
 
     const btn = document.getElementById('btn-supprimer');
     btn.disabled = true;
-    btn.textContent = 'Suppression…';
-    showFeedback('feedback-supprimer', 'loading', 'Suppression en cours…');
+    btn.innerHTML = '<span class="spinner"></span>Suppression…';
+    showFeedback('feedback-supprimer', 'loading', `Suppression de ${sirets.length} client(s) en cours…`);
 
-    try {
-        const res = await fetch(API_URL + "/client/" + encodeURIComponent(siret), {
-            method: "DELETE",
-        });
-        const json = await res.json();
-        if (!res.ok) {
-            showFeedback('feedback-supprimer', 'error', `❌ ${json.detail || 'Erreur serveur'}`);
-        } else {
-            showFeedback('feedback-supprimer', 'success', `✅ Client ${label} supprimé.`);
-            document.getElementById('s-siret').value = '';
-            document.getElementById('s-nom').value = '';
-            document.getElementById('s-search').value = '';
-            allClients = [];
-        }
-    } catch(e) {
-        showFeedback('feedback-supprimer', 'error', `❌ Erreur réseau : ${e.message}`);
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = '🗑 Supprimer définitivement';
+    let ok = 0;
+    const errors = [];
+    for (const siret of sirets) {
+        try {
+            const res = await fetch(API_URL + "/client/" + encodeURIComponent(siret), { method: "DELETE" });
+            if (res.ok) ok++;
+            else errors.push(siret);
+        } catch { errors.push(siret); }
     }
+
+    allClients = [];
+    await loadDeleteTable();
+
+    if (errors.length === 0) {
+        showFeedback('feedback-supprimer', 'success', `✅ ${ok} client(s) supprimé(s) avec succès.`);
+    } else {
+        showFeedback('feedback-supprimer', 'error', `⚠️ ${ok} supprimé(s) — ${errors.length} erreur(s) : ${errors.join(', ')}`);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '🗑 Supprimer la sélection';
 }
 
-// ── Fermer les dropdowns au clic extérieur ────────────────────────────────────
+// ── Fermer le dropdown recherche (onglet Modifier) au clic extérieur ──────────
 document.addEventListener('click', e => {
     if (!e.target.closest('#m-search') && !e.target.closest('#search-results'))
         document.getElementById('search-results').classList.remove('open');
-    if (!e.target.closest('#s-search') && !e.target.closest('#search-results-del'))
-        document.getElementById('search-results-del').classList.remove('open');
 });
 </script>
 </body>
