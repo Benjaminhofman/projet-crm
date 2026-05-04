@@ -96,6 +96,24 @@ def get_clients():
         conn.close()
 
 
+@app.get("/api/clients/columns", summary="Liste les colonnes et types PostgreSQL de la table clients")
+def get_clients_columns():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+            cur.execute(
+                "SELECT column_name, data_type "
+                "FROM information_schema.columns "
+                "WHERE table_name = 'clients' "
+                "ORDER BY ordinal_position"
+            )
+            return [dict(row) for row in cur.fetchall()]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
 @app.get("/api/clients/template-csv", summary="CSV vide avec les en-têtes de la table clients")
 def get_clients_template():
     conn = _get_db_conn()

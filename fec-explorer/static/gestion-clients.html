@@ -1497,6 +1497,7 @@ async function loadBaseTab() {
     }
     buildDbHeader();
     populateDbFilters();
+    fetchColumnTypes(); // pré-chauffe le cache pour l'import CSV
     dbAllRows = [...allClients];
     document.getElementById('db-search').value = '';
     dbCurrentPage = 1;
@@ -1693,7 +1694,8 @@ function dbExportCSV() {
 // IMPORT CSV
 // ══════════════════════════════════════════════════════════════════════════════
 
-let importRows = [];
+let importRows    = [];
+let dbColumnTypes = null; // cache { col_name: 'boolean'|'numeric'|'date'|'text' }
 
 // Convertit DD/MM/YYYY → YYYY-MM-DD ; laisse inchangé tout autre format
 function convertDate(val) {
@@ -1710,6 +1712,53 @@ function convertBool(val) {
     if (v === 'oui' || v === 'true'  || v === '1') return true;
     if (v === 'non' || v === 'false' || v === '0') return false;
     return val;
+}
+
+// Charge et met en cache les types PostgreSQL des colonnes de la table clients
+async function fetchColumnTypes() {
+    if (dbColumnTypes) return dbColumnTypes;
+    try {
+        const res  = await fetch(API_URL + "/clients/columns");
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const cols = await res.json();
+        const NUMERIC = ['numeric','integer','bigint','smallint','real','double precision','decimal','money'];
+        const DATE    = ['date','timestamp'];
+        dbColumnTypes = {};
+        cols.forEach(({ column_name, data_type }) => {
+            const dt = (data_type || '').toLowerCase();
+            if      (dt === 'boolean')                    dbColumnTypes[column_name] = 'boolean';
+            else if (NUMERIC.some(t => dt.includes(t)))  dbColumnTypes[column_name] = 'numeric';
+            else if (DATE.some(t => dt.includes(t)))     dbColumnTypes[column_name] = 'date';
+            else                                          dbColumnTypes[column_name] = 'text';
+        });
+    } catch(e) {
+        console.error("fetchColumnTypes :", e);
+        dbColumnTypes = {};  // fallback : tout traité comme text
+    }
+    return dbColumnTypes;
+}
+
+// Convertit une valeur CSV selon le type réel de la colonne PostgreSQL
+// Retourne null pour les valeurs vides ou invalides (le backend les ignorera)
+function convertFieldByType(val, type) {
+    const s = (val === null || val === undefined) ? '' : String(val).trim();
+    if (s === '') return null;
+    switch (type) {
+        case 'boolean': {
+            const v = s.toLowerCase();
+            if (v === 'oui' || v === 'true'  || v === '1') return true;
+            if (v === 'non' || v === 'false' || v === '0') return false;
+            return null;  // valeur non reconnue → ne pas envoyer
+        }
+        case 'numeric': {
+            const n = parseFloat(s.replace(',', '.').replace(/\s/g, ''));
+            return isNaN(n) ? null : n;
+        }
+        case 'date':
+            return convertDate(s);
+        default:
+            return s;
+    }
 }
 
 function triggerImport() {
@@ -1808,12 +1857,13 @@ function closeImportModal() {
 async function confirmImport() {
     if (!importRows.length) return;
 
-    // Normalise tous les champs string : date FR → ISO, puis booléen texte → boolean
+    // Conversion typée : récupère les types PostgreSQL puis applique la bonne conversion
+    const types   = await fetchColumnTypes();
     const payload = importRows.map(r => {
-        const row = { ...r };
-        Object.keys(row).forEach(k => {
-            if (typeof row[k] === 'string')
-                row[k] = convertBool(convertDate(row[k]));
+        const row = {};
+        Object.entries(r).forEach(([k, v]) => {
+            const converted = convertFieldByType(v, types[k] || 'text');
+            if (converted !== null) row[k] = converted;
         });
         return row;
     });
