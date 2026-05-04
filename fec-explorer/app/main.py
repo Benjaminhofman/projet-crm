@@ -5,6 +5,7 @@ import psycopg2
 import psycopg2.extras
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -67,6 +68,29 @@ def get_clients():
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         conn.close()
+
+
+@app.get("/api/clients/template-csv", summary="CSV vide avec les en-têtes de la table clients")
+def get_clients_template():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT column_name FROM information_schema.columns "
+                "WHERE table_name = 'clients' ORDER BY ordinal_position"
+            )
+            columns = [row[0] for row in cur.fetchall()]
+    except psycopg2.Error as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+    csv_content = ",".join(columns) + "\n"
+    return Response(
+        content=csv_content,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=template_clients.csv"},
+    )
 
 
 @app.post("/api/fec/upload", summary="Parse un dossier FEC et retourne les indicateurs")
