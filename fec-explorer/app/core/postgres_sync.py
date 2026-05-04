@@ -29,20 +29,21 @@ FIELD_MAP_R: dict = {
     "honoraires":     "honoraires_r",
     "banque":         "banque_r",
     "emprunt":        "emprunt_r",
-    "masse_salariale":"masse_salariale_r",
+    "masse_salariale":"m_salariale R",
     "produits":       "produits_r",
     "charges":        "charges_r",
     "tresorerie":     "tresorerie_r",
     "resultat":       "resultat_r",
 }
 
-_RE_DIGIT = re.compile(r"^\d")
+_RE_DIGIT      = re.compile(r"^\d")
+_RE_NEEDS_QUOTE = re.compile(r"[^a-z0-9_]")  # espace, majuscule, tiret, etc.
 _RESERVED = {"is", "order", "table", "user", "type", "end", "start", "check", "index"}
 
 
 def _qi(col: str) -> str:
-    """Guillemets doubles si le nom commence par un chiffre ou est un mot réservé SQL."""
-    if _RE_DIGIT.match(col) or col in _RESERVED:
+    """Guillemets doubles si le nom n'est pas un identifiant SQL simple (espace, majuscule, chiffre initial, mot réservé)."""
+    if _RE_DIGIT.match(col) or col in _RESERVED or _RE_NEEDS_QUOTE.search(col):
         return f'"{col}"'
     return col
 
