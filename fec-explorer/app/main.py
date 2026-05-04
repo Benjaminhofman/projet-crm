@@ -77,6 +77,55 @@ def _safe_fields(fields: Dict[str, Any], conn) -> Dict[str, Any]:
     }
 
 
+_BOOL_TRUE     = {"oui", "true", "1", "yes"}
+_BOOL_FALSE    = {"non", "false", "0", "no"}
+_BOOL_STRS     = _BOOL_TRUE | _BOOL_FALSE
+_NUMERIC_TYPES = ("numeric", "integer", "bigint", "smallint", "real", "double", "decimal", "money")
+_DATE_TYPES    = ("date", "timestamp")
+
+
+def _coerce_import_value(val: Any, data_type: str) -> Any:
+    """
+    Convertit val selon le type PostgreSQL de la colonne cible.
+    Retourne None pour les valeurs vides ou non convertibles
+    (le champ sera alors exclu de l'UPSERT).
+    """
+    if val is None:
+        return None
+    s = str(val).strip()
+    if not s:
+        return None
+    dt = data_type.lower()
+
+    # Date / timestamp : DD/MM/YYYY → ISO YYYY-MM-DD
+    if any(t in dt for t in _DATE_TYPES):
+        m = re.match(r"^(\d{2})/(\d{2})/(\d{4})$", s)
+        if m:
+            return f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+        return s  # déjà ISO ou autre format → PostgreSQL gère
+
+    # Boolean
+    if dt == "boolean":
+        v = s.lower()
+        if v in _BOOL_TRUE:
+            return True
+        if v in _BOOL_FALSE:
+            return False
+        return None  # valeur non reconnue → NULL (champ ignoré)
+
+    # Numeric
+    if any(t in dt for t in _NUMERIC_TYPES):
+        if s.lower() in _BOOL_STRS:
+            return None  # "oui"/"non" dans un champ numérique → NULL
+        try:
+            return float(s.replace(",", ".").replace(" ", "").replace(" ", ""))
+        except ValueError:
+            return None
+
+    # Texte et autres types : inchangé
+    return s
+
+
 # ── Routes API ────────────────────────────────────────────────────────────────
 
 @app.get("/api/clients", summary="Liste tous les clients depuis PostgreSQL")
@@ -280,13 +329,13 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
     errors: List[str] = []
 
     try:
-        # Récupère les colonnes valides une seule fois
+        # Récupère colonnes + types PostgreSQL une seule fois
         with conn.cursor() as cur:
             cur.execute(
-                "SELECT column_name FROM information_schema.columns "
+                "SELECT column_name, data_type FROM information_schema.columns "
                 "WHERE table_name = 'clients'"
             )
-            valid_cols = {row[0] for row in cur.fetchall()}
+            col_types = {row[0]: row[1] for row in cur.fetchall()}
 
         for i, item in enumerate(body):
             if not isinstance(item, dict):
@@ -296,11 +345,15 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 errors.append(f"Ligne {i + 1} : siret manquant")
                 continue
 
-            fields = {
-                k: v for k, v in item.items()
-                if _COL_RE.match(str(k)) and k in valid_cols
-                and v is not None and str(v).strip() != ""
-            }
+            # Filtre + conversion typée : seules les colonnes réelles sont conservées
+            fields = {}
+            for k, v in item.items():
+                if not (_COL_RE.match(str(k)) and k in col_types):
+                    continue
+                coerced = _coerce_import_value(v, col_types[k])
+                if coerced is not None:
+                    fields[k] = coerced
+
             if not fields:
                 errors.append(f"Ligne {i + 1} ({siret}) : aucun champ valide")
                 continue
