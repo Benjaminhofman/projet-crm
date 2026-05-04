@@ -29,7 +29,7 @@ FIELD_MAP_R: dict = {
     "honoraires":     "honoraires_r",
     "banque":         "banque_r",
     "emprunt":        "emprunt_r",
-    "masse_salariale":"m_salariale R",
+    "masse_salariale":"m_salariale_r",
     "produits":       "produits_r",
     "charges":        "charges_r",
     "tresorerie":     "tresorerie_r",
