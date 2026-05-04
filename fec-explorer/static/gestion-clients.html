@@ -1695,6 +1695,14 @@ function dbExportCSV() {
 
 let importRows = [];
 
+// Convertit DD/MM/YYYY → YYYY-MM-DD ; laisse inchangé tout autre format
+function convertDate(val) {
+    if (!val) return val;
+    const m = String(val).match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+    if (m) return m[3] + '-' + m[2] + '-' + m[1];
+    return val;
+}
+
 function triggerImport() {
     document.getElementById('csv-file-input').click();
 }
@@ -1791,10 +1799,15 @@ function closeImportModal() {
 async function confirmImport() {
     if (!importRows.length) return;
 
-    // Convertit "oui"/"non" → boolean pour les champs toggle avant envoi
+    // Convertit "oui"/"non" → boolean et dates DD/MM/YYYY → ISO avant envoi
     const toggleIds = TOGGLE_FIELDS.map(f => f.id);
     const payload = importRows.map(r => {
         const row = { ...r };
+        // 1) Dates françaises → ISO sur tous les champs string
+        Object.keys(row).forEach(k => {
+            if (typeof row[k] === 'string') row[k] = convertDate(row[k]);
+        });
+        // 2) Toggles : "oui"/"non" → boolean
         toggleIds.forEach(id => {
             if (!(id in row)) return;
             const v = String(row[id]).toLowerCase().trim();
