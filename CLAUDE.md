@@ -6,7 +6,6 @@ un portefeuille client. L'objectif prioritaire est une UX/UI
 excellente : fluide, intuitive et moderne.
 
 Intégrations actuelles et à venir :
-- **Airtable** : source de données principale
 - **Make (Integromat)** : automatisation de workflows (en cours)
 
 ## Règles de comportement
@@ -33,10 +32,6 @@ Intégrations actuelles et à venir :
 - Toujours gérer les états de chargement et les erreurs
 - Penser à l'expérience mobile si pertinent
 
-## Intégration Airtable
-- Respecter les limites de l'API Airtable (5 req/sec)
-- Toujours gérer les erreurs d'API proprement
-- Mettre en cache les données quand c'est possible pour la fluidité
 
 ## Ce qu'il ne faut pas toucher
 - Les fichiers de configuration d'environnement (.env)
@@ -54,3 +49,54 @@ le lien de mon projet sur github est https://github.com/Benjaminhofman/projet-cr
 A la fin de chaque session de travail, mets à jour la section 
 "État du projet" et "Prochaines étapes" de ce fichier CLAUDE.md 
 avec ce qui a été accompli et ce qui reste à faire.
+
+Dans CLAUDE.md, remplace la section "## Intégration Airtable" et ajoute les sections manquantes :
+
+## Stack technique actuelle
+- Frontend : HTML/JS vanilla (static/ servi par FastAPI)
+- Backend : FastAPI Python (fec-explorer/app/main.py)
+- Base de données : PostgreSQL (Render, Frankfurt)
+- Hébergement : Render (Web Service + PostgreSQL)
+- Versioning : GitHub https://github.com/Benjaminhofman/projet-crm
+- URL production : https://projet-crm-m0o3.onrender.com
+
+## Architecture des fichiers
+- fec-explorer/app/main.py : API FastAPI (tous les endpoints)
+- fec-explorer/static/ : tous les fichiers HTML/JS servis
+- fec-explorer/app/core/fec_parser.py : parsing des fichiers FEC
+- fec-explorer/app/core/indicators.py : calcul des 61+ indicateurs
+- fec-explorer/app/core/postgres_sync.py : sync FEC → PostgreSQL
+- fec-explorer/import_csv.py : import CSV → PostgreSQL
+- fec-explorer/sync_html.py : synchronise HTML racine → static/
+
+## Base de données PostgreSQL
+- Table principale : clients (135 colonnes)
+- Colonnes _r : alimentées par le FEC Explorer
+- Colonnes sans _r : saisies manuellement via le CRM
+- UPSERT sur siret (clé primaire)
+- DATABASE_URL depuis variable d'environnement
+
+## Endpoints API principaux
+- GET /api/clients → liste tous les clients
+- GET /api/client/{siret} → détail d'un client
+- POST /api/client/create → créer un client
+- POST /api/client/update → modifier un client
+- DELETE /api/client/{siret} → supprimer un client
+- POST /api/clients/import → import CSV en masse (UPSERT)
+- GET /api/clients/columns → types des colonnes PostgreSQL
+- GET /api/clients/template-csv → CSV vide avec en-têtes
+- POST /update-airtable → met à jour un champ (siret, field, value)
+- POST /api/fec/upload → parse FEC + sync PostgreSQL
+
+## Règles importantes
+- NE JAMAIS utiliser Airtable — migration terminée, PostgreSQL uniquement
+- Toujours utiliser c.siret et NON c.id dans les fichiers HTML
+- Les noms de champs sont en snake_case PostgreSQL (pas d'espaces)
+- Après modification d'un fichier HTML racine, exécuter sync_html.py
+  pour synchroniser vers static/
+- Les booléens s'envoient en true/false (pas "oui"/"non") vers l'API
+- Les dates s'envoient en format ISO YYYY-MM-DD vers l'API
+
+## ~~Intégration Airtable~~ (SUPPRIMÉE)
+Airtable a été complètement remplacé par PostgreSQL.
+Ne plus jamais utiliser AIRTABLE_TOKEN, BASE_ID ou TABLE_NAME.
