@@ -473,6 +473,13 @@ async function loadClients() {
     checkAnniversaires(clientsData);
 }
 
+function calcAnciennete(dateEntree) {
+    if (!dateEntree) return "";
+    const diff = new Date() - new Date(dateEntree);
+    const ans = Math.floor(diff / (1000 * 60 * 60 * 24 * 365.25));
+    return ans + " an" + (ans > 1 ? "s" : "");
+}
+
 function displayClients(data) {
 
     displayedClients = data;
@@ -500,7 +507,7 @@ function displayClients(data) {
             <td>${c["structure"] || ""}</td>
 
             <td>
-                ${anciennete}
+                ${calcAnciennete(c.date_entree)}
                 ${anciennete < 1 ? '<span class="alert">⚠️</span><span class="alert-badge">Nouveau</span>' : ''}
             </td>
 
