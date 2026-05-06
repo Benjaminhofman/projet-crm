@@ -363,6 +363,13 @@ function formatDate(dateStr) {
     return dateStr.substring(0, 10);
 }
 
+function formatDateEU(d) {
+    if (!d) return "";
+    const p = d.split("-");
+    if (p.length !== 3) return d;
+    return p[2] + "/" + p[1] + "/" + p[0];
+}
+
 // Score de rentabilité (retourne la valeur numérique brute)
 function getRentabiliteScore(val) {
     return parseFloat(val) || 0;
@@ -643,7 +650,7 @@ function displayClients(data) {
 
             <td>${c.code_client || ""}</td>
             <td><strong>${c.nom_client || ""}</strong></td>
-            <td>${c.date_de_cloture || ""}</td>
+            <td>${formatDateEU(c.date_de_cloture)}</td>
             <td>${c.structure || ""}</td>
 
             <td>${c.anciennete > 0 ? c.anciennete + ' an' + (c.anciennete > 1 ? 's' : '') : '—'}</td>
