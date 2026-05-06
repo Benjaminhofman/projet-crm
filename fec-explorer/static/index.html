@@ -512,7 +512,7 @@ function checkAnniversaires(data) {
 let filtersConfig = [
     { field: "collaborateur",  label: "Collaborateur" },
     { field: "structure",      label: "Structure" },
-    { field: "activiter",     label: "Activité" },
+    { field: "activite_r",    label: "Activité" },
     { field: "assistant",      label: "Assistant" },
     { field: "datedecloture", label: "Date de clôture" }
 ];
@@ -597,6 +597,8 @@ async function loadClients() {
 
     const res = await fetch(API_URL + "/clients");
     clientsData = await res.json();
+
+    if (clientsData.length > 0) console.log("[DEBUG] champs client[0] :", clientsData[0]);
 
     buildFilters();
     displayClients(clientsData);
