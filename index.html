@@ -500,8 +500,7 @@ function displayClients(data) {
             <td>${c["structure"] || ""}</td>
 
             <td>
-                ${c.anciennete ? c.anciennete + (c.anciennete > 1 ? " ans" : " an") : "—"}
-                ${anciennete < 1 ? '<span class="alert">⚠️</span><span class="alert-badge">Nouveau</span>' : ''}
+                ${c.anciennete ? c.anciennete + " an" + (c.anciennete > 1 ? "s" : "") : "—"}
             </td>
 
             <td>${c.honoraires_cpta || ""}</td>
