@@ -20,8 +20,8 @@ _THIS_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR   = os.path.dirname(_THIS_DIR)
 STATIC_DIR = os.path.join(_THIS_DIR, "static")
 
-# Jamais copiés dans static/ (utils.js est inliné dans les HTML)
-SKIP_FILES = {"utils.js"}
+# Jamais copiés dans static/ (utils.js est inliné ; index.html géré manuellement)
+SKIP_FILES = {"utils.js", "index.html"}
 
 # Fichiers de sauvegarde à ignorer
 _RE_BACKUP = re.compile(r"sauv|SAUVE", re.IGNORECASE)

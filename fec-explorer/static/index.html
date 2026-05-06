@@ -620,7 +620,7 @@ function displayClients(data) {
 
         const score = parseFloat(c["rentabilite"]) || 0;
         const anc = c.anciennete;
-        const ancText = (anc > 0) ? anc + " an" + (anc > 1 ? "s" : "") : "—";
+        const ancText = (anc && anc > 0) ? anc + " an" + (anc > 1 ? "s" : "") : "—";
 
         table.innerHTML += `
         <tr onclick="viewClient('${c.siret}')">
