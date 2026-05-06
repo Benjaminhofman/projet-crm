@@ -7,7 +7,7 @@ import psycopg2
 import psycopg2.extras
 from fastapi import Body, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import Response
+from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -440,4 +440,9 @@ def migrate_anciennete():
 # Monté en dernier pour ne pas masquer les routes API.
 
 _STATIC_DIR = os.path.join(os.path.dirname(__file__), "..", "static")
+
+@app.get("/index.html")
+async def serve_index():
+    return FileResponse(os.path.join(_STATIC_DIR, "index.html"), headers={"Cache-Control": "no-cache"})
+
 app.mount("/", StaticFiles(directory=_STATIC_DIR, html=True), name="static")
