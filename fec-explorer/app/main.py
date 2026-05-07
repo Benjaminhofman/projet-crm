@@ -535,11 +535,10 @@ def migrate_activite():
                 return {"error": "table naf vide ou inexistante"}
 
             cur.execute("""
-                UPDATE clients c
-                SET activite_r = n.libelle
+                UPDATE clients SET activite_r = n.libelle
                 FROM naf n
-                WHERE LEFT(c.code_naf_r::text, 1) = n.code::text
-                  AND c.code_naf_r IS NOT NULL;
+                WHERE CAST(LEFT(CAST(code_naf_r AS TEXT), 1) AS INTEGER) = CAST(n.code AS INTEGER)
+                AND code_naf_r IS NOT NULL AND code_naf_r != '';
             """)
             updated = cur.rowcount
         conn.commit()
