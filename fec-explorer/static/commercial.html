@@ -135,6 +135,7 @@ function formatDate(dateStr) {
     if (!dateStr) return "";
     return dateStr.substring(0, 10);
 }
+function fmtDate(d){if(!d)return"";const p=String(d).split("-");return p.length>=3?p[2].substring(0,2)+"/"+p[1]:d;}
 
 // Score de rentabilité (retourne la valeur numérique brute)
 function getRentabiliteScore(val) {
@@ -292,7 +293,7 @@ function display(data) {
             <td>${c.nom_client || ""}</td>
             <td>${c.assistant || ""}</td>
             <td>${c.collaborateur || ""}</td>
-            <td>${c.date_de_cloture || ""}</td>
+            <td>${fmtDate(c.date_de_cloture)}</td>
             ${buildSelect(c, "suivi mission retraite")}
             ${buildSelect(c, "suivi mission patrimoniale")}
             ${buildSelect(c, "suivi mission placement")}
