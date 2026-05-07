@@ -876,7 +876,7 @@ def rendement_setup():
                     FROM clients WHERE siret = p_siret;
 
                     -- Taux horaire (poids 50) — renseigné si temps_passe > 0
-                    IF v_temps IS NOT NULL AND v_temps > 0 AND v_honos IS NOT NULL THEN
+                    IF v_temps IS NOT NULL AND v_temps > 0 AND v_honos IS NOT NULL AND v_honos > 0 THEN
                         v_poids_taux := 50;
                         v_taux := v_honos / v_temps;
                         IF    v_taux >= 120 THEN v_pts_taux := 50;
