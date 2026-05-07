@@ -244,6 +244,7 @@ def update_client_field(body: UpdateRequest):
     if not re.fullmatch(r"[A-Za-z0-9_ ]+", field):
         return {"error": f"Nom de colonne invalide : {field!r}"}
 
+    print(f"UPDATE: siret={siret}, field={field}, value={value}")
     conn = _get_db_conn()
     try:
         with conn.cursor() as cur:
@@ -252,12 +253,14 @@ def update_client_field(body: UpdateRequest):
                 f'UPDATE clients SET "{field}" = %s WHERE siret = %s',
                 (value, siret),
             )
+            print(f"UPDATE rowcount: {cur.rowcount}")
             if cur.rowcount == 0:
                 return {"error": f"Aucun client trouvé avec siret={siret!r}"}
         conn.commit()
         return {"success": True}
     except psycopg2.Error as e:
         conn.rollback()
+        print(f"UPDATE erreur: {e}")
         return {"error": str(e)}
     finally:
         conn.close()
