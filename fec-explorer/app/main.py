@@ -717,6 +717,92 @@ def fix_juridique_exceptionnel():
         conn.close()
 
 
+@app.get("/api/migrate/rendement_setup", summary="Crée la colonne rendement et la fonction calc_rendement()")
+def rendement_setup():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            # 1. Colonne rendement
+            cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS rendement NUMERIC;")
+
+            # 2. Fonction de calcul score 0-100
+            # Taux horaire (honoraires_cpta / temps_passe) → 50 pts
+            #   >= 120 €/h → 50 | >= 80 €/h → 35 | >= 50 €/h → 15 | < 50 → 0
+            # Ancienneté → 20 pts
+            #   >= 10 ans → 20 | >= 5 ans → 15 | >= 3 ans → 10 | >= 1 an → 5 | < 1 → 0
+            # CA_r → 15 pts
+            #   >= 50000 → 15 | >= 30000 → 10 | >= 15000 → 5 | < 15000 → 0
+            # Résultat_r → 15 pts
+            #   >= 30000 → 15 | >= 10000 → 10 | >= 0 → 5 | < 0 → 0
+            cur.execute("""
+                CREATE OR REPLACE FUNCTION calc_rendement(p_siret TEXT)
+                RETURNS NUMERIC AS $$
+                DECLARE
+                    v_honos     NUMERIC;
+                    v_temps     NUMERIC;
+                    v_taux      NUMERIC;
+                    v_anciennete NUMERIC;
+                    v_ca        NUMERIC;
+                    v_resultat  NUMERIC;
+                    v_score     NUMERIC := 0;
+                BEGIN
+                    SELECT
+                        COALESCE(honoraires_cpta, 0),
+                        COALESCE(temps_passe, 0),
+                        COALESCE(anciennete, 0),
+                        COALESCE(ca_r, 0),
+                        COALESCE(resultat_r, 0)
+                    INTO v_honos, v_temps, v_anciennete, v_ca, v_resultat
+                    FROM clients WHERE siret = p_siret;
+
+                    -- Taux horaire (50 pts)
+                    IF v_temps > 0 THEN
+                        v_taux := v_honos / v_temps;
+                        IF    v_taux >= 120 THEN v_score := v_score + 50;
+                        ELSIF v_taux >= 80  THEN v_score := v_score + 35;
+                        ELSIF v_taux >= 50  THEN v_score := v_score + 15;
+                        END IF;
+                    END IF;
+
+                    -- Ancienneté (20 pts)
+                    IF    v_anciennete >= 10 THEN v_score := v_score + 20;
+                    ELSIF v_anciennete >= 5  THEN v_score := v_score + 15;
+                    ELSIF v_anciennete >= 3  THEN v_score := v_score + 10;
+                    ELSIF v_anciennete >= 1  THEN v_score := v_score + 5;
+                    END IF;
+
+                    -- CA_r (15 pts)
+                    IF    v_ca >= 50000 THEN v_score := v_score + 15;
+                    ELSIF v_ca >= 30000 THEN v_score := v_score + 10;
+                    ELSIF v_ca >= 15000 THEN v_score := v_score + 5;
+                    END IF;
+
+                    -- Résultat_r (15 pts)
+                    IF    v_resultat >= 30000 THEN v_score := v_score + 15;
+                    ELSIF v_resultat >= 10000 THEN v_score := v_score + 10;
+                    ELSIF v_resultat >= 0     THEN v_score := v_score + 5;
+                    END IF;
+
+                    RETURN LEAST(v_score, 100);
+                END;
+                $$ LANGUAGE plpgsql;
+            """)
+
+            # 3. Pré-calcule rendement pour tous les clients existants
+            cur.execute("""
+                UPDATE clients SET rendement = calc_rendement(siret);
+            """)
+            updated = cur.rowcount
+
+        conn.commit()
+        return {"status": "ok", "clients_mis_a_jour": updated}
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 # ── Static files ──────────────────────────────────────────────────────────────
 # Monté en dernier pour ne pas masquer les routes API.
 
