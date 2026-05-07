@@ -815,13 +815,15 @@ def install_trigger_rendement():
                 $$ LANGUAGE plpgsql;
             """)
             cur.execute("DROP TRIGGER IF EXISTS update_rendement ON clients;")
+            cur.execute("DROP TRIGGER IF EXISTS trg_rendement ON clients;")
             cur.execute("""
-                CREATE TRIGGER update_rendement
-                BEFORE INSERT OR UPDATE ON clients
+                CREATE TRIGGER trg_rendement
+                BEFORE INSERT OR UPDATE OF honoraires_cpta, temps_passe, ca_r, resultat_r, anciennete
+                ON clients
                 FOR EACH ROW EXECUTE FUNCTION update_rendement_trigger();
             """)
         conn.commit()
-        return {"status": "ok", "trigger": "update_rendement", "fonction": "update_rendement_trigger"}
+        return {"status": "ok"}
     except Exception as e:
         conn.rollback()
         return {"error": str(e)}
