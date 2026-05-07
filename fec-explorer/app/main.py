@@ -717,6 +717,25 @@ def fix_juridique_exceptionnel():
         conn.close()
 
 
+@app.get("/api/debug/rendement", summary="Retourne les données rendement de tous les clients triés par score DESC")
+def debug_rendement():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT nom_client, ca_r, resultat_r, honoraires_cpta, temps_passe, anciennete, rendement
+                FROM clients
+                ORDER BY rendement DESC NULLS LAST;
+            """)
+            cols = ["nom_client", "ca_r", "resultat_r", "honoraires_cpta", "temps_passe", "anciennete", "rendement"]
+            rows = [dict(zip(cols, row)) for row in cur.fetchall()]
+        return rows
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/rendement_setup", summary="Crée la colonne rendement et la fonction calc_rendement()")
 def rendement_setup():
     conn = _get_db_conn()
