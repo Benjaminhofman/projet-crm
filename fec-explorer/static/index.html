@@ -292,7 +292,6 @@ tr:hover {
         </div>
 
         <input type="text" id="search" placeholder="🔍 Rechercher un client...">
-        <input type="number" id="filter-renta" placeholder="Min /10" style="width:120px;">
         <select id="filter-tranche" style="padding:6px;border-radius:6px;border:1px solid #ccc;font-size:13px;">
             <option value="">Toutes tranches</option>
             <option value="excellent">⭐ Excellent (≥80)</option>
@@ -346,8 +345,6 @@ tr:hover {
 
 <th>Activité</th>
 
-<th onclick="sortByRentabilite()">Rentabilité 🔽</th>
-
 <th>Action</th>
 </tr>
 </thead>
@@ -383,10 +380,6 @@ function formatDateEU(d) {
     return p[2] + "/" + p[1];
 }
 
-// Score de rentabilité (retourne la valeur numérique brute)
-function getRentabiliteScore(val) {
-    return parseFloat(val) || 0;
-}
 
 // Chargement des clients depuis l'API avec gestion d'erreur
 async function fetchClients() {
@@ -499,13 +492,6 @@ function exportCSV(data, filename, columns) {
 let clientsData = [];
 let displayedClients = [];
 
-/* 🔥 RENTABILITE */
-
-function getColor(score) {
-    if (score < 4) return "#e74c3c";
-    if (score < 7) return "#f39c12";
-    return "#27ae60";
-}
 
 function badgeRendement(val) {
     const n = parseFloat(val);
@@ -671,13 +657,12 @@ function displayClients(data) {
     table.innerHTML = "";
 
     if (!data.length) {
-        table.innerHTML = "<tr><td colspan='14'>Aucun résultat</td></tr>";
+        table.innerHTML = "<tr><td colspan='13'>Aucun résultat</td></tr>";
         return;
     }
 
     data.forEach(c => {
 
-        const score = parseFloat(c["rentabilite"]) || 0;
         table.innerHTML += `
         <tr onclick="viewClient('${c.siret}')">
 
@@ -697,10 +682,6 @@ function displayClients(data) {
             <td>${c.resultat || ""}</td>
             <td>${c.activite_r || ""}</td>
 
-            <td style="font-weight:bold; color:${getColor(score)};">
-                ${score.toFixed(2)}
-            </td>
-
             <td>
                 <button class="btn" onclick="event.stopPropagation(); viewClient('${c.siret}')">
                     Voir
@@ -711,31 +692,19 @@ function displayClients(data) {
     });
 }
 
-/* 🔥 TRI */
-function sortByRentabilite() {
-    const sorted = [...clientsData].sort((a, b) =>
-        (parseFloat(b["rentabilite"]) || 0) -
-        (parseFloat(a["rentabilite"]) || 0)
-    );
-    displayClients(sorted);
-}
-
 /* 🔥 FILTRE COMBINÉ */
 function applyAllFilters() {
     const search  = (document.getElementById("search").value || "").toLowerCase();
-    const minRenta = parseFloat(document.getElementById("filter-renta").value) || 0;
-    const tranche  = document.getElementById("filter-tranche").value;
+    const tranche = document.getElementById("filter-tranche").value;
 
     const filtered = clientsData.filter(c => {
-        if (search   && !(c.nom_client || "").toLowerCase().includes(search)) return false;
-        if (minRenta && (getRentabiliteScore(c["rentabilite"]) < minRenta))   return false;
-        if (tranche  && getTranche(c.rendement) !== tranche)                  return false;
+        if (search  && !(c.nom_client || "").toLowerCase().includes(search)) return false;
+        if (tranche && getTranche(c.rendement) !== tranche)                  return false;
         return true;
     });
     displayClients(filtered);
 }
 
-document.getElementById("filter-renta").addEventListener("input", applyAllFilters);
 document.getElementById("search").addEventListener("input", applyAllFilters);
 document.getElementById("filter-tranche").addEventListener("change", applyAllFilters);
 
@@ -787,8 +756,7 @@ function exportIndexCSV() {
         { label: "Assistant",     field: "assistant" },
         { label: "CA",            field: "car" },
         { label: "Résultat",      field: "resultat" },
-        { label: "Activité",      field: "activiter" },
-        { label: "Rentabilité",   field: "rentabilite" }
+        { label: "Activité",      field: "activiter" }
     ]);
 }
 
