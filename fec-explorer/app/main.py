@@ -668,20 +668,6 @@ def migrate_trigger_activite():
 
 
 
-@app.get("/api/debug/retraite")
-def debug_retraite():
-    conn = _get_db_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT column_name FROM information_schema.columns
-                WHERE table_name='clients' AND column_name LIKE '%retraite%'
-                ORDER BY column_name;
-            """)
-            return {"columns": [r[0] for r in cur.fetchall()]}
-    finally:
-        conn.close()
-
 
 # ── Static files ──────────────────────────────────────────────────────────────
 # Monté en dernier pour ne pas masquer les routes API.
