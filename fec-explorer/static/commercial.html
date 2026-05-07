@@ -324,17 +324,6 @@ function buildSelect(c, field) {
     </td>`;
 }
 
-// update airtable
-async function updateField(id, field, value) {
-    await fetch(API_URL + "/update-airtable", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, field, value })
-    });
-
-    const client = dataGlobal.find(c => c.siret === id);
-    if (client) client[field] = value;
-}
 
 // navigation (comme opportunités)
 function openClient(id) {
