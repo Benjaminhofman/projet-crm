@@ -852,62 +852,84 @@ def rendement_setup():
                 CREATE OR REPLACE FUNCTION calc_rendement(p_siret TEXT)
                 RETURNS NUMERIC AS $$
                 DECLARE
-                    v_honos      NUMERIC;
-                    v_temps      NUMERIC;
-                    v_taux       NUMERIC;
-                    v_anciennete NUMERIC;
-                    v_ca         NUMERIC;
-                    v_resultat   NUMERIC;
-                    v_score      NUMERIC := 0;
-                    v_pts_taux   NUMERIC := 0;
+                    v_honos       NUMERIC;
+                    v_temps       NUMERIC;
+                    v_anciennete  NUMERIC;
+                    v_ca          NUMERIC;
+                    v_resultat    NUMERIC;
+                    -- pts et poids par facteur
+                    v_pts_taux    NUMERIC := 0;
+                    v_pts_anc     NUMERIC := 0;
+                    v_pts_ca      NUMERIC := 0;
+                    v_pts_res     NUMERIC := 0;
+                    v_poids_taux  NUMERIC := 0;
+                    v_poids_anc   NUMERIC := 0;
+                    v_poids_ca    NUMERIC := 0;
+                    v_poids_res   NUMERIC := 0;
+                    v_taux        NUMERIC;
+                    v_sum_pts     NUMERIC := 0;
+                    v_sum_poids   NUMERIC := 0;
+                    v_autres      INTEGER := 0;
                 BEGIN
-                    SELECT
-                        COALESCE(honoraires_cpta, 0),
-                        COALESCE(temps_passe, 0),
-                        COALESCE(anciennete, 0),
-                        COALESCE(ca_r, 0),
-                        COALESCE(resultat_r, 0)
+                    SELECT honoraires_cpta, temps_passe, anciennete, ca_r, resultat_r
                     INTO v_honos, v_temps, v_anciennete, v_ca, v_resultat
                     FROM clients WHERE siret = p_siret;
 
-                    -- Taux horaire (50 pts) — linéaire par tranche
-                    -- <50€=0 | 50-80€=0→25 linéaire | 80-120€=25→50 linéaire | >120€=50
-                    IF v_temps > 0 THEN
+                    -- Taux horaire (poids 50) — renseigné si temps_passe > 0
+                    IF v_temps IS NOT NULL AND v_temps > 0 AND v_honos IS NOT NULL THEN
+                        v_poids_taux := 50;
                         v_taux := v_honos / v_temps;
-                        IF v_taux >= 120 THEN
-                            v_pts_taux := 50;
-                        ELSIF v_taux >= 80 THEN
-                            v_pts_taux := 25 + (v_taux - 80) * 25 / 40;
-                        ELSIF v_taux >= 50 THEN
-                            v_pts_taux := (v_taux - 50) * 25 / 30;
-                        ELSE
-                            v_pts_taux := 0;
+                        IF    v_taux >= 120 THEN v_pts_taux := 50;
+                        ELSIF v_taux >= 80  THEN v_pts_taux := 25 + (v_taux - 80)  * 25 / 40;
+                        ELSIF v_taux >= 50  THEN v_pts_taux := (v_taux - 50) * 25 / 30;
+                        ELSE                     v_pts_taux := 0;
                         END IF;
                     END IF;
-                    v_score := v_score + v_pts_taux;
 
-                    -- Ancienneté (20 pts)
-                    -- <2ans=0 | 2-5=10 | 5-10=15 | >10=20
-                    IF    v_anciennete > 10 THEN v_score := v_score + 20;
-                    ELSIF v_anciennete >= 5 THEN v_score := v_score + 15;
-                    ELSIF v_anciennete >= 2 THEN v_score := v_score + 10;
+                    -- Ancienneté (poids 20) — renseigné si > 0
+                    IF v_anciennete IS NOT NULL AND v_anciennete > 0 THEN
+                        v_poids_anc := 20;
+                        v_autres    := v_autres + 1;
+                        IF    v_anciennete > 10 THEN v_pts_anc := 20;
+                        ELSIF v_anciennete >= 5 THEN v_pts_anc := 15;
+                        ELSIF v_anciennete >= 2 THEN v_pts_anc := 10;
+                        ELSE                         v_pts_anc := 0;
+                        END IF;
                     END IF;
 
-                    -- CA_r (15 pts)
-                    -- <100k=0 | 100-500k=7 | 500k-2M=12 | >2M=15
-                    IF    v_ca >= 2000000 THEN v_score := v_score + 15;
-                    ELSIF v_ca >= 500000  THEN v_score := v_score + 12;
-                    ELSIF v_ca >= 100000  THEN v_score := v_score + 7;
+                    -- CA_r (poids 15) — renseigné si > 0
+                    IF v_ca IS NOT NULL AND v_ca > 0 THEN
+                        v_poids_ca := 15;
+                        v_autres   := v_autres + 1;
+                        IF    v_ca >= 2000000 THEN v_pts_ca := 15;
+                        ELSIF v_ca >= 500000  THEN v_pts_ca := 12;
+                        ELSIF v_ca >= 100000  THEN v_pts_ca := 7;
+                        ELSE                       v_pts_ca := 0;
+                        END IF;
                     END IF;
 
-                    -- Résultat_r (15 pts)
-                    -- <0=0 | 0-50k=7 | 50k-200k=12 | >200k=15
-                    IF    v_resultat >= 200000 THEN v_score := v_score + 15;
-                    ELSIF v_resultat >= 50000  THEN v_score := v_score + 12;
-                    ELSIF v_resultat >= 0      THEN v_score := v_score + 7;
+                    -- Résultat_r (poids 15) — renseigné si NOT NULL
+                    IF v_resultat IS NOT NULL THEN
+                        v_poids_res := 15;
+                        v_autres    := v_autres + 1;
+                        IF    v_resultat >= 200000 THEN v_pts_res := 15;
+                        ELSIF v_resultat >= 50000  THEN v_pts_res := 12;
+                        ELSIF v_resultat >= 0      THEN v_pts_res := 7;
+                        ELSE                            v_pts_res := 0;
+                        END IF;
                     END IF;
 
-                    RETURN ROUND(LEAST(v_score, 100), 0);
+                    -- Données insuffisantes : taux absent ET moins de 2 autres facteurs
+                    IF v_poids_taux = 0 AND v_autres < 2 THEN
+                        RETURN NULL;
+                    END IF;
+
+                    v_sum_pts   := v_pts_taux + v_pts_anc + v_pts_ca + v_pts_res;
+                    v_sum_poids := v_poids_taux + v_poids_anc + v_poids_ca + v_poids_res;
+
+                    IF v_sum_poids = 0 THEN RETURN NULL; END IF;
+
+                    RETURN ROUND(v_sum_pts * 100 / v_sum_poids);
                 END;
                 $$ LANGUAGE plpgsql;
             """)
