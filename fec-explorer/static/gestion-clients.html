@@ -666,7 +666,7 @@ input:focus, select:focus {
         <div class="field-grid">
             <div class="field-group">
                 <label>SIRET <span class="req">*</span></label>
-                <input type="text" id="c-siret" placeholder="14 chiffres" maxlength="14" inputmode="numeric">
+                <input type="text" id="c-siret" placeholder="9 chiffres" maxlength="9" inputmode="numeric">
             </div>
             <div class="field-group">
                 <label>Nom client</label>
@@ -1199,8 +1199,8 @@ async function createClient() {
         document.getElementById('c-siret').focus();
         return;
     }
-    if (!/^\d{14}$/.test(siret)) {
-        showFeedback('feedback-creer', 'error', '⚠️ Le SIRET doit contenir exactement 14 chiffres.');
+    if (!/^\d{9}$/.test(siret)) {
+        showFeedback('feedback-creer', 'error', '⚠️ Le SIRET doit contenir exactement 9 chiffres.');
         return;
     }
 
