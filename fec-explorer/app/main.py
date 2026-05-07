@@ -736,6 +736,26 @@ def debug_rendement():
         conn.close()
 
 
+@app.get("/api/debug/triggers", summary="Liste les triggers actifs sur la table clients")
+def debug_triggers():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT trigger_name, event_manipulation, action_timing
+                FROM information_schema.triggers
+                WHERE event_object_table = 'clients'
+                ORDER BY trigger_name, event_manipulation;
+            """)
+            cols = ["trigger_name", "event_manipulation", "action_timing"]
+            rows = [dict(zip(cols, row)) for row in cur.fetchall()]
+        return rows
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/rendement_setup", summary="Crée la colonne rendement et la fonction calc_rendement()")
 def rendement_setup():
     conn = _get_db_conn()
