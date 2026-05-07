@@ -163,6 +163,7 @@ function bindFilterInputs(selector) {
 
 // Mise à jour d'un champ texte/date/nombre dans PostgreSQL
 async function updateField(siret, field, value, el) {
+    console.log("updateField appelé:", siret, field, value);
     if (el) el.style.background = "#fff3cd";
     try {
         const res = await fetch(API_URL + "/update-airtable", {
