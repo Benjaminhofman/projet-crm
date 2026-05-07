@@ -126,8 +126,14 @@ async function load() {
 
     const data = await fetchClients();
 
+    console.log("filterField:", _pageConfig.filterField);
+    console.log("sample value:", data[0]?.[_pageConfig.filterField]);
+
     dataGlobal = _pageConfig.filterField
-        ? data.filter(c => c[_pageConfig.filterField] == true || c[_pageConfig.filterField] === "true" || c[_pageConfig.filterField] === 1)
+        ? data.filter(c => c[_pageConfig.filterField] === true
+            || c[_pageConfig.filterField] === "true"
+            || c[_pageConfig.filterField] === 1
+            || c[_pageConfig.filterField] === "1")
         : data;
 
     display(dataGlobal);
