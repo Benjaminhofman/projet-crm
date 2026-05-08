@@ -1279,7 +1279,7 @@ def install_trigger_franchise_tva():
                     ELSIF NEW.ca_r < 37500 AND LOWER(NEW.achat_revente) = 'non' THEN
                         NEW.franchise_tva_prest := 'OUI';
                     ELSE
-                        NEW.franchise_tva_prest := 'NON';
+                        NEW.franchise_tva_prest := NULL;
                     END IF;
                     RETURN NEW;
                 END;
@@ -1317,7 +1317,7 @@ def franchise_tva_achrevente_setup():
                         THEN 'Données manquantes'
                     WHEN LOWER(achat_revente) = 'oui' AND ca_r BETWEEN 0 AND 85000
                         THEN 'OUI'
-                    ELSE 'NON'
+                    ELSE NULL
                 END;
             """)
             updated = cur.rowcount
@@ -1346,7 +1346,7 @@ def install_trigger_franchise_achrevente():
                     ELSIF LOWER(NEW.achat_revente) = 'oui' AND NEW.ca_r BETWEEN 0 AND 85000 THEN
                         NEW.franchise_tva_achrevente := 'OUI';
                     ELSE
-                        NEW.franchise_tva_achrevente := 'NON';
+                        NEW.franchise_tva_achrevente := NULL;
                     END IF;
                     RETURN NEW;
                 END;
@@ -1383,7 +1383,7 @@ def franchise_tva_setup():
                         THEN 'Données manquantes'
                     WHEN ca_r < 37500 AND LOWER(achat_revente) = 'non'
                         THEN 'OUI'
-                    ELSE 'NON'
+                    ELSE NULL
                 END;
             """)
             updated = cur.rowcount
