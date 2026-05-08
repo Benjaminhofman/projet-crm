@@ -907,6 +907,29 @@ def fix_activite_trigger():
         conn.close()
 
 
+@app.get("/api/migrate/force_recalc_activite", summary="Recalcule activite_r depuis naf via SPLIT_PART sur code_naf_r")
+def force_recalc_activite():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE clients
+                SET activite_r = (
+                    SELECT libelle FROM naf
+                    WHERE code = SPLIT_PART(code_naf_r::text, '.', 1)
+                )
+                WHERE code_naf_r IS NOT NULL;
+            """)
+            updated = cur.rowcount
+        conn.commit()
+        return {"status": "ok", "mis_a_jour": updated}
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/debug/naf_sample", summary="Échantillon de codes NAF pour vérifier le contenu de la table")
 def debug_naf_sample():
     conn = _get_db_conn()
