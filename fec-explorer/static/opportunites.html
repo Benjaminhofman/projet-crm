@@ -338,13 +338,13 @@ function showTooltip(event, client) {
     const tooltip = document.getElementById("tooltip-client");
 
     tooltip.innerHTML = `
-        <strong>${client["nom client"] || ""}</strong><br>
-        Code : ${client["code client"] || ""}<br>
-        Assistant : ${client["assistant"] || ""}<br>
-        Collaborateur : ${client["collaborateur"] || ""}<br>
-        Clôture : ${client["date de cloture"] || ""}<br>
-        CA : ${client["CA R"] || ""}<br>
-        Résultat : ${client["resultat R"] || ""}
+        <strong>${client.nom_client || ""}</strong><br>
+        Code : ${client.code_client || ""}<br>
+        Assistant : ${client.assistant || ""}<br>
+        Collaborateur : ${client.collaborateur || ""}<br>
+        Clôture : ${fmtDate(client.date_de_cloture)}<br>
+        CA : ${client.ca_r || ""}<br>
+        Résultat : ${client.resultat_r || ""}
     `;
 
     tooltip.style.display = "block";
