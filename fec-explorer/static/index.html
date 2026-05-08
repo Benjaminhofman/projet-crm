@@ -679,7 +679,7 @@ function displayClients(data) {
             <td>${c.assistant || ""}</td>
 
             <td>${c.ca_r || ""}</td>
-            <td>${c.resultat || ""}</td>
+            <td>${c.resultat_r || ""}</td>
             <td>${c.activite_r || ""}</td>
 
             <td>
@@ -734,8 +734,8 @@ function sortByCA() {
 
 function sortByResultat() {
     const sorted = [...clientsData].sort((a, b) =>
-        (parseFloat(b.resultat) || 0) -
-        (parseFloat(a.resultat) || 0)
+        (parseFloat(b.resultat_r) || 0) -
+        (parseFloat(a.resultat_r) || 0)
     );
     displayClients(sorted);
 }
@@ -755,7 +755,7 @@ function exportIndexCSV() {
         { label: "Collaborateur", field: "collaborateur" },
         { label: "Assistant",     field: "assistant" },
         { label: "CA",            field: "car" },
-        { label: "Résultat",      field: "resultat" },
+        { label: "Résultat",      field: "resultat_r" },
         { label: "Activité",      field: "activiter" }
     ]);
 }
