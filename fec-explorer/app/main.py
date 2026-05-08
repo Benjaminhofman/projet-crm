@@ -1349,6 +1349,24 @@ def age_setup():
         conn.close()
 
 
+@app.get("/api/migrate/champs_libres_setup", summary="Ajoute les colonnes commentaires, code_naf_r et prevoyance si absentes")
+def champs_libres_setup():
+    colonnes = ["commentaires", "code_naf_r", "prevoyance"]
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS commentaires TEXT;")
+            cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS code_naf_r TEXT;")
+            cur.execute("ALTER TABLE clients ADD COLUMN IF NOT EXISTS prevoyance TEXT;")
+        conn.commit()
+        return {"ok": True, "colonnes": colonnes}
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/mission_retraite_setup", summary="Calcule la colonne mission_retraite depuis age")
 def mission_retraite_setup():
     conn = _get_db_conn()
