@@ -1328,6 +1328,37 @@ def arbitrage_remuneration_setup():
         conn.close()
 
 
+@app.get("/api/migrate/mission_placement_setup", summary="Calcule la colonne mission_placement depuis ca_r et tresorerie_r")
+def mission_placement_setup():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE clients
+                SET mission_placement = CASE
+                    WHEN ca_r IS NULL OR tresorerie_r IS NULL
+                        THEN 'Données manquantes'
+                    WHEN ca_r BETWEEN 200000 AND 5000000
+                         AND tresorerie_r > 50000
+                         AND tresorerie_r * 100.0 / ca_r > 25
+                        THEN 'OPPORTUNITÉ FORTE'
+                    WHEN ca_r BETWEEN 100000 AND 5000000
+                         AND tresorerie_r > 20000
+                         AND tresorerie_r * 100.0 / ca_r > 15
+                        THEN 'OPPORTUNITÉ MOYENNE'
+                    ELSE NULL
+                END;
+            """)
+            updated = cur.rowcount
+        conn.commit()
+        return {"status": "ok", "clients_mis_a_jour": updated}
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/op_prevoyance_setup", summary="Ajoute et calcule la colonne op_prevoyance")
 def op_prevoyance_setup():
     conn = _get_db_conn()
