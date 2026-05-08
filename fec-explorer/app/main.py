@@ -1301,6 +1301,35 @@ def install_trigger_franchise_tva():
         conn.close()
 
 
+@app.get("/api/migrate/franchise_tva_achrevente_setup", summary="Ajoute et calcule la colonne franchise_tva_achrevente")
+def franchise_tva_achrevente_setup():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                ALTER TABLE clients
+                ADD COLUMN IF NOT EXISTS franchise_tva_achrevente TEXT;
+            """)
+            cur.execute("""
+                UPDATE clients
+                SET franchise_tva_achrevente = CASE
+                    WHEN ca_r IS NULL OR achat_revente IS NULL
+                        THEN 'Données manquantes'
+                    WHEN LOWER(achat_revente) = 'oui' AND ca_r BETWEEN 0 AND 85000
+                        THEN 'OUI'
+                    ELSE 'NON'
+                END;
+            """)
+            updated = cur.rowcount
+        conn.commit()
+        return {"status": "ok", "clients_mis_a_jour": updated}
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/franchise_tva_setup", summary="Ajoute et calcule la colonne franchise_tva_prest")
 def franchise_tva_setup():
     conn = _get_db_conn()
