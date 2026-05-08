@@ -907,6 +907,24 @@ def fix_activite_trigger():
         conn.close()
 
 
+@app.get("/api/debug/naf_sample", summary="Échantillon de codes NAF pour vérifier le contenu de la table")
+def debug_naf_sample():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT code, libelle FROM naf
+                WHERE code IN ('5','6','56','43','85','55','45')
+                ORDER BY code;
+            """)
+            rows = [{"code": r[0], "libelle": r[1]} for r in cur.fetchall()]
+        return rows
+    except Exception as e:
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/debug/activite_function", summary="Retourne le code source de la fonction update_activite_r()")
 def debug_activite_function():
     conn = _get_db_conn()
