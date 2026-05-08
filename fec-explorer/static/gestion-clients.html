@@ -774,6 +774,10 @@ input:focus, select:focus {
                 <label>Code URSSAF</label>
                 <input type="text" id="c-code_urssaf">
             </div>
+            <div class="field-group">
+                <label>IR (mai)</label>
+                <input type="number" id="c-mai_ir" step="0.01" min="0">
+            </div>
         </div>
     </div>
 
@@ -943,6 +947,10 @@ input:focus, select:focus {
                 <div class="field-group">
                     <label>Code URSSAF</label>
                     <input type="text" id="m-code_urssaf">
+                </div>
+                <div class="field-group">
+                    <label>IR (mai)</label>
+                    <input type="number" id="m-mai_ir" step="0.01" min="0">
                 </div>
             </div>
         </div>
@@ -1131,7 +1139,7 @@ const TEXT_FIELDS = [
     "siret","nom_client","code_client","structure","annee","mode_dentree",
     "date_entree","date_de_cloture","anniversaire","achat_revente",
     "contact","e_mail","tel","collaborateur","assistant",
-    "honoraires_cpta","temps_passe","code_impot_gouv","code_urssaf",
+    "honoraires_cpta","temps_passe","code_impot_gouv","code_urssaf","mai_ir",
     "commentaires","code_naf_r","prevoyance",
 ];
 
