@@ -952,6 +952,28 @@ input:focus, select:focus {
             <div class="toggles-grid" id="toggles-modifier"></div>
         </div>
 
+        <div class="card">
+            <div class="card-title">Informations complémentaires</div>
+            <div class="field-grid">
+                <div class="field-group">
+                    <label>Code NAF</label>
+                    <input type="text" id="m-code_naf_r" placeholder="ex: 56.30Z">
+                </div>
+                <div class="field-group">
+                    <label>Prévoyance</label>
+                    <select id="m-prevoyance">
+                        <option value="">-- Choisir --</option>
+                        <option value="oui">oui</option>
+                        <option value="non">non</option>
+                    </select>
+                </div>
+                <div class="field-group" style="grid-column: 1 / -1;">
+                    <label>Commentaires</label>
+                    <textarea id="m-commentaires" placeholder="Notes libres" rows="3" style="width:100%;resize:vertical;padding:8px;border:1px solid var(--border);border-radius:6px;font-family:inherit;font-size:.9rem;"></textarea>
+                </div>
+            </div>
+        </div>
+
         <div id="feedback-modifier" class="feedback"></div>
         <div class="form-footer">
             <button class="btn btn-outline" onclick="clearModifySelection()">Changer de client</button>
