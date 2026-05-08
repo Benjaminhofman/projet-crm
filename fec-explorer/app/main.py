@@ -1328,6 +1328,43 @@ def arbitrage_remuneration_setup():
         conn.close()
 
 
+@app.get("/api/migrate/install_trigger_arbitrage_remuneration", summary="Installe le trigger BEFORE qui calcule arbitrage_remuneration_dirigeant depuis NEW.*")
+def install_trigger_arbitrage_remuneration():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DROP TRIGGER IF EXISTS trg_arbitrage_remuneration ON clients;")
+            cur.execute("DROP FUNCTION IF EXISTS update_arbitrage_remuneration_trigger();")
+            cur.execute("""
+                CREATE FUNCTION update_arbitrage_remuneration_trigger()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    IF NEW.resultat_r IS NULL THEN
+                        NEW.arbitrage_remuneration_dirigeant := 'Donnée manquante';
+                    ELSIF NEW.resultat_r > 42500 THEN
+                        NEW.arbitrage_remuneration_dirigeant := 'OUI';
+                    ELSE
+                        NEW.arbitrage_remuneration_dirigeant := NULL;
+                    END IF;
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            """)
+            cur.execute("""
+                CREATE TRIGGER trg_arbitrage_remuneration
+                BEFORE INSERT OR UPDATE OF resultat_r
+                ON clients
+                FOR EACH ROW EXECUTE FUNCTION update_arbitrage_remuneration_trigger();
+            """)
+        conn.commit()
+        return {"status": "ok"}
+    except Exception as e:
+        conn.rollback()
+        return {"error": str(e)}
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/franchise_tva_achrevente_setup", summary="Ajoute et calcule la colonne franchise_tva_achrevente")
 def franchise_tva_achrevente_setup():
     conn = _get_db_conn()
