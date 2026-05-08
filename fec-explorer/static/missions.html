@@ -279,7 +279,7 @@ function display(data) {
 // 🔥 génération textarea
 function buildTextarea(c, field) {
     return `
-    <td>
+    <td onclick="event.stopPropagation()" style="cursor:default;">
         <textarea
             onclick="event.stopPropagation()"
             onchange="updateField('${c.siret}', '${field}', this.value)"
