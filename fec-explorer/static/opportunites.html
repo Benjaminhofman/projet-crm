@@ -110,13 +110,13 @@ tr:hover {
 <tr id="filters-opportunites">
 <td colspan="6"></td>
 
-<td><input type="checkbox" data-field="mission retraite"></td>
-<td><input type="checkbox" data-field="mission patrimoniale"></td>
-<td><input type="checkbox" data-field="mission placement"></td>
-<td><input type="checkbox" data-field="franchise TVA prest"></td>
-<td><input type="checkbox" data-field="franchise TVA achrevente"></td>
-<td><input type="checkbox" data-field="op Prevoyance"></td>
-<td><input type="checkbox" data-field="arbitrage rémunération dirigeant"></td>
+<td><input type="checkbox" data-field="mission_retraite"></td>
+<td><input type="checkbox" data-field="mission_patrimoniale"></td>
+<td><input type="checkbox" data-field="mission_placement"></td>
+<td><input type="checkbox" data-field="franchise_tva_prest"></td>
+<td><input type="checkbox" data-field="franchise_tva_achrevente"></td>
+<td><input type="checkbox" data-field="op_prevoyance"></td>
+<td><input type="checkbox" data-field="arbitrage_remuneration_dirigeant"></td>
 
 </tr>
 
@@ -299,27 +299,36 @@ function display(data) {
             <td>${c.collaborateur || ""}</td>
             <td>${fmtDate(c.date_de_cloture)}</td>
 
-            ${buildCheckbox(c, "mission retraite")}
-            ${buildCheckbox(c, "mission patrimoniale")}
-            ${buildCheckbox(c, "mission placement")}
-            ${buildCheckbox(c, "franchise TVA prest")}
-            ${buildCheckbox(c, "franchise TVA achrevente")}
-            ${buildCheckbox(c, "op Prevoyance")}
-            ${buildCheckbox(c, "arbitrage rémunération dirigeant")}
+            ${buildIndicator(c.mission_retraite === 'OUI')}
+            ${buildIndicator(c.mission_patrimoniale === 'OUI')}
+            ${buildIndicator(['OPPORTUNITÉ FORTE','OPPORTUNITÉ MOYENNE'].includes(c.mission_placement))}
+            ${buildIndicator(c.franchise_tva_prest === 'OUI')}
+            ${buildIndicator(c.franchise_tva_achrevente === 'OUI')}
+            ${buildIndicator(c.op_prevoyance === 'OUI')}
+            ${buildIndicator(c.arbitrage_remuneration_dirigeant === 'OUI')}
 
         </tr>`;
     });
 }
 
-// checkbox dynamique
-function buildCheckbox(c, field) {
-    return `
-    <td>
-        <input type="checkbox"
-            ${c[field] ? "checked" : ""}
-            onchange="updateField('${c.siret}', '${field}', this.checked)">
+// indicateur lecture seule (pas de clic, pas de navigation)
+function buildIndicator(isChecked) {
+    return `<td onclick="event.stopPropagation()" style="cursor:default;">
+        <input type="checkbox" ${isChecked ? 'checked' : ''} disabled
+            style="pointer-events:none; cursor:default; accent-color:#27ae60;">
     </td>`;
 }
+
+// conditions de filtrage par champ
+const FIELD_CONDITIONS = {
+    mission_retraite:                 c => c.mission_retraite === 'OUI',
+    mission_patrimoniale:             c => c.mission_patrimoniale === 'OUI',
+    mission_placement:                c => ['OPPORTUNITÉ FORTE','OPPORTUNITÉ MOYENNE'].includes(c.mission_placement),
+    franchise_tva_prest:              c => c.franchise_tva_prest === 'OUI',
+    franchise_tva_achrevente:         c => c.franchise_tva_achrevente === 'OUI',
+    op_prevoyance:                    c => c.op_prevoyance === 'OUI',
+    arbitrage_remuneration_dirigeant: c => c.arbitrage_remuneration_dirigeant === 'OUI',
+};
 
 // update airtable
 
@@ -366,7 +375,7 @@ function applyFilters() {
         if (annee && !(String(c.annee)).includes(annee)) return false;
         if (cloture && !(c.date_de_cloture || "").toLowerCase().includes(cloture)) return false;
 
-        return checkedFields.every(f => Boolean(c[f]) === true);
+        return checkedFields.every(f => FIELD_CONDITIONS[f] ? FIELD_CONDITIONS[f](c) : Boolean(c[f]));
     });
 
     display(filtered);
