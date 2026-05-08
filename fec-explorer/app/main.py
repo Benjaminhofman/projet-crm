@@ -1276,7 +1276,7 @@ def install_trigger_franchise_tva():
                 BEGIN
                     IF NEW.ca_r IS NULL OR NEW.achat_revente IS NULL THEN
                         NEW.franchise_tva_prest := 'Données manquantes';
-                    ELSIF NEW.ca_r < 40000 AND LOWER(NEW.achat_revente) = 'non' THEN
+                    ELSIF NEW.ca_r < 37500 AND LOWER(NEW.achat_revente) = 'non' THEN
                         NEW.franchise_tva_prest := 'OUI';
                     ELSE
                         NEW.franchise_tva_prest := 'NON';
@@ -1315,7 +1315,7 @@ def franchise_tva_setup():
                 SET franchise_tva_prest = CASE
                     WHEN ca_r IS NULL OR achat_revente IS NULL
                         THEN 'Données manquantes'
-                    WHEN ca_r < 40000 AND LOWER(achat_revente) = 'non'
+                    WHEN ca_r < 37500 AND LOWER(achat_revente) = 'non'
                         THEN 'OUI'
                     ELSE 'NON'
                 END;
