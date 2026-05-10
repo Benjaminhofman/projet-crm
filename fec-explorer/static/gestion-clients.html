@@ -1200,17 +1200,24 @@ function populateAssistantList() {
 // Chargement au démarrage pour que les datalists soient prêts dès l'onglet Créer
 loadAllClients();
 
-// Lecture des paramètres URL : si action=modifier + siret → ouvre l'onglet Modifier et charge le client
-(function initFromURL() {
+// Lecture des paramètres URL au chargement : action=modifier + siret → formulaire pré-rempli
+document.addEventListener('DOMContentLoaded', function () {
     const params = new URLSearchParams(window.location.search);
     const siret  = params.get('siret');
     const action = params.get('action');
-    if (action === 'modifier' && siret) {
-        const modifierBtn = document.querySelector('.tab-btn[onclick*="modifier"]');
-        showTab('modifier', modifierBtn);
-        loadAllClients().then(() => selectClient(siret));
-    }
-})();
+    if (action !== 'modifier' || !siret) return;
+
+    // 1. Activer l'onglet Modifier
+    const modifierBtn = document.querySelector('.tab-btn[onclick*="modifier"]');
+    showTab('modifier', modifierBtn);
+
+    // 2. Remplir le champ de recherche avec le siret
+    const searchInput = document.getElementById('m-search');
+    if (searchInput) searchInput.value = siret;
+
+    // 3. Charger directement le client et afficher le formulaire pré-rempli
+    selectClient(siret);
+});
 
 // ── Feedback helper ───────────────────────────────────────────────────────────
 function showFeedback(id, type, msg) {
