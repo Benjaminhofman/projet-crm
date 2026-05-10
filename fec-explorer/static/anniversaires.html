@@ -219,14 +219,66 @@ async function loadCalendar() {
             };
         });
 
+    const fiscalEvents = computeFiscalEvents(data);
+
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         locale: 'fr',
         height: "auto",
-        events: events
+        events: [...events, ...fiscalEvents]
     });
 
     calendar.render();
+}
+
+// Génère les événements fiscaux fixes et groupés
+function computeFiscalEvents(clients) {
+    const aujourd_hui = new Date();
+    aujourd_hui.setHours(0, 0, 0, 0);
+
+    // Calcule la prochaine occurrence d'une date fixe (mois 1-based, jour)
+    function prochaineFecheFixe(mois, jour) {
+        let d = new Date(aujourd_hui.getFullYear(), mois - 1, jour);
+        if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, mois - 1, jour);
+        const yyyy = d.getFullYear();
+        const mm   = String(d.getMonth() + 1).padStart(2, '0');
+        const dd   = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}T00:00:00`;
+    }
+
+    const events = [];
+
+    // 2561 — 16 février — 1 événement groupé pour les clients avec dividendes > 1
+    const clients2561 = clients.filter(c => parseFloat(c.dividendes) > 1);
+    if (clients2561.length > 0) {
+        events.push({
+            title: `📋 2561 (${clients2561.length} client${clients2561.length > 1 ? 's' : ''})`,
+            start: prochaineFecheFixe(2, 16),
+            allDay: true,
+            backgroundColor: '#f39c12',
+            borderColor: '#f39c12'
+        });
+    }
+
+    // DAS2 — 5 mai
+    events.push({
+        title: '📋 DAS2',
+        start: prochaineFecheFixe(5, 5),
+        allDay: true,
+        backgroundColor: '#95a5a6',
+        borderColor: '#95a5a6'
+    });
+
+    // DECLOYER — 20 mai
+    events.push({
+        title: '📋 DECLOYER',
+        start: prochaineFecheFixe(5, 20),
+        allDay: true,
+        backgroundColor: '#95a5a6',
+        borderColor: '#95a5a6'
+    });
+
+    return events;
 }
 
 loadCalendar();
