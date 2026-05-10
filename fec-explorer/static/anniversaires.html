@@ -330,8 +330,10 @@ function computeFiscalEvents(clients) {
             const moisCloture = parts[1];
             const jourCloture = parts[2];
 
-            // Solde IS — 15 mai, prochaine occurrence
-            const solde = new Date(aujourd_hui.getFullYear(), 4, 15);
+            // Solde IS — 15 du 4e mois après la clôture (exception 31/12 → mai = +5)
+            // Formule générale : ((moisCloture - 1 + 4) % 12) + 1, sauf mois=12 → 5
+            const moisSolde = moisCloture === 12 ? 5 : ((moisCloture - 1 + 4) % 12) + 1;
+            const solde = new Date(aujourd_hui.getFullYear(), moisSolde - 1, 15);
             if (solde < aujourd_hui) solde.setFullYear(aujourd_hui.getFullYear() + 1);
             events.push({
                 title: `💰 Solde IS — ${c.nom_client}`,
