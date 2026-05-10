@@ -175,11 +175,11 @@ h3 {
     <a href="index.html" class="back">⬅ Retour</a>
 
     <div class="actions">
-        <a id="create-link" href="#" target="_blank" class="btn btn-create">
+        <a id="create-link" href="gestion-clients.html" class="btn btn-create">
             ➕ Créer client
         </a>
 
-        <a id="edit-link" href="#" target="_blank" class="btn btn-edit">
+        <a id="edit-link" href="gestion-clients.html" class="btn btn-edit">
             ✏️ Modifier
         </a>
     </div>
@@ -363,17 +363,8 @@ async function loadClient() {
     const res = await fetch(API_URL + "/client/" + siret);
     const data = await res.json();
 
-    const createLink = data.creer_client;
-    const editLink = data.lien_modification;
-
-    const createBtn = document.getElementById("create-link");
     const editBtn = document.getElementById("edit-link");
-
-    if (createLink) createBtn.href = createLink;
-    else createBtn.classList.add("disabled");
-
-    if (editLink) editBtn.href = editLink;
-    else editBtn.classList.add("disabled");
+    if (siret) editBtn.href = `gestion-clients.html?siret=${siret}&action=modifier`;
 
     // 🔥 CALCULS
     const tempsPasse = parseFloat(data.temps_passe) || 0;

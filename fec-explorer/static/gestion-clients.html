@@ -1200,6 +1200,18 @@ function populateAssistantList() {
 // Chargement au démarrage pour que les datalists soient prêts dès l'onglet Créer
 loadAllClients();
 
+// Lecture des paramètres URL : si action=modifier + siret → ouvre l'onglet Modifier et charge le client
+(function initFromURL() {
+    const params = new URLSearchParams(window.location.search);
+    const siret  = params.get('siret');
+    const action = params.get('action');
+    if (action === 'modifier' && siret) {
+        const modifierBtn = document.querySelector('.tab-btn[onclick*="modifier"]');
+        showTab('modifier', modifierBtn);
+        loadAllClients().then(() => selectClient(siret));
+    }
+})();
+
 // ── Feedback helper ───────────────────────────────────────────────────────────
 function showFeedback(id, type, msg) {
     const el = document.getElementById(id);
