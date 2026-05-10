@@ -341,20 +341,20 @@ function computeFiscalEvents(clients) {
                 borderColor: '#e67e22'
             });
 
-            // Acomptes IS — uniquement clôture 31/12 : 15 mars, juin, sept, déc
-            if (moisCloture === 12 && jourCloture === 31) {
-                [[3, 15], [6, 15], [9, 15], [12, 15]].forEach(([mois, jour]) => {
-                    const acompte = new Date(aujourd_hui.getFullYear(), mois - 1, jour);
-                    if (acompte < aujourd_hui) acompte.setFullYear(aujourd_hui.getFullYear() + 1);
-                    events.push({
-                        title: `💰 Acompte IS — ${c.nom_client}`,
-                        start: toLocalDateStr(acompte),
-                        allDay: true,
-                        backgroundColor: '#e67e22',
-                        borderColor: '#e67e22'
-                    });
+            // Acomptes IS — 4 dates pour tous les clients is=true
+            // Le 15 du 3e mois de chaque trimestre suivant la clôture
+            [3, 6, 9, 12].forEach(offset => {
+                const moisAcompte = ((moisCloture - 1 + offset) % 12) + 1;
+                const acompte = new Date(aujourd_hui.getFullYear(), moisAcompte - 1, 15);
+                if (acompte < aujourd_hui) acompte.setFullYear(aujourd_hui.getFullYear() + 1);
+                events.push({
+                    title: `💰 Acompte IS — ${c.nom_client}`,
+                    start: toLocalDateStr(acompte),
+                    allDay: true,
+                    backgroundColor: '#e67e22',
+                    borderColor: '#e67e22'
                 });
-            }
+            });
         });
 
     // CVAE — Solde 5 mai (tous) + acomptes 15 juin/sept (ca_r > 500 000 ou ca_r inconnu)
