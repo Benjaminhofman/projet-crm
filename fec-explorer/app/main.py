@@ -509,6 +509,34 @@ def refresh_anciennete():
         conn.close()
 
 
+@app.get("/api/migrate/install_trigger_anciennete", summary="Installe le trigger trg_anciennete sur date_entree")
+def install_trigger_anciennete():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DROP TRIGGER IF EXISTS trg_anciennete ON clients;")
+            cur.execute("""
+                CREATE OR REPLACE FUNCTION update_anciennete_trigger()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                    NEW.anciennete := EXTRACT(YEAR FROM AGE(NOW(), NEW.date_entree));
+                    RETURN NEW;
+                END;
+                $$ LANGUAGE plpgsql;
+            """)
+            cur.execute("""
+                CREATE TRIGGER trg_anciennete
+                BEFORE INSERT OR UPDATE OF date_entree
+                ON clients
+                FOR EACH ROW
+                EXECUTE FUNCTION update_anciennete_trigger();
+            """)
+        conn.commit()
+        return {"status": "ok", "message": "Trigger trg_anciennete installé avec succès"}
+    finally:
+        conn.close()
+
+
 _NAF_DATA = [
     ("1",  "Culture et production animale, chasse et services annexes"),
     ("2",  "Sylviculture et exploitation forestière"),
