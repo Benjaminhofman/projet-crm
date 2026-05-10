@@ -357,6 +357,42 @@ function computeFiscalEvents(clients) {
             }
         });
 
+    // CVAE — Solde 5 mai + acomptes 15 juin et 15 sept
+    clients
+        .filter(c => isTruthy(c.cvae))
+        .forEach(c => {
+            [
+                [5,  5,  `📘 CVAE Solde — ${c.nom_client}`],
+                [6,  15, `📘 CVAE Acompte — ${c.nom_client}`],
+                [9,  15, `📘 CVAE Acompte — ${c.nom_client}`]
+            ].forEach(([mois, jour, titre]) => {
+                const d = new Date(aujourd_hui.getFullYear(), mois - 1, jour);
+                if (d < aujourd_hui) d.setFullYear(aujourd_hui.getFullYear() + 1);
+                events.push({
+                    title: titre,
+                    start: toLocalDateStr(d),
+                    allDay: true,
+                    backgroundColor: '#9b59b6',
+                    borderColor: '#9b59b6'
+                });
+            });
+        });
+
+    // TVS — 5 mai
+    clients
+        .filter(c => isTruthy(c.tvs))
+        .forEach(c => {
+            const d = new Date(aujourd_hui.getFullYear(), 4, 5);
+            if (d < aujourd_hui) d.setFullYear(aujourd_hui.getFullYear() + 1);
+            events.push({
+                title: `🚗 TVS — ${c.nom_client}`,
+                start: toLocalDateStr(d),
+                allDay: true,
+                backgroundColor: '#3498db',
+                borderColor: '#3498db'
+            });
+        });
+
     return events;
 }
 
