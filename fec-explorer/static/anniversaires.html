@@ -278,6 +278,50 @@ function computeFiscalEvents(clients) {
         borderColor: '#95a5a6'
     });
 
+    // Liasse — 1 événement par client où is=true ou liasse=true
+    // Deadline : 20 mai si clôture 31/12, sinon clôture + 3 mois + 15j
+    function isTruthy(val) {
+        return val === true || val === 'true' || val === 't';
+    }
+
+    function toLocalDateStr(d) {
+        const yyyy = d.getFullYear();
+        const mm   = String(d.getMonth() + 1).padStart(2, '0');
+        const dd   = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}T00:00:00`;
+    }
+
+    clients
+        .filter(c => (isTruthy(c.is) || isTruthy(c.liasse)) && c.date_de_cloture)
+        .forEach(c => {
+            const parts = c.date_de_cloture.split('-').map(Number);
+            const moisCloture = parts[1];
+            const jourCloture = parts[2];
+
+            let deadline;
+            if (moisCloture === 12 && jourCloture === 31) {
+                // Clôture 31/12 → deadline fixe 20 mai
+                deadline = new Date(aujourd_hui.getFullYear(), 4, 20);
+                if (deadline < aujourd_hui) deadline = new Date(aujourd_hui.getFullYear() + 1, 4, 20);
+            } else {
+                // Autre clôture → prochaine occurrence + 3 mois + 15j
+                let cloture = new Date(aujourd_hui.getFullYear(), moisCloture - 1, jourCloture);
+                deadline = new Date(cloture.getFullYear(), cloture.getMonth() + 3, cloture.getDate() + 15);
+                if (deadline < aujourd_hui) {
+                    cloture = new Date(aujourd_hui.getFullYear() + 1, moisCloture - 1, jourCloture);
+                    deadline = new Date(cloture.getFullYear(), cloture.getMonth() + 3, cloture.getDate() + 15);
+                }
+            }
+
+            events.push({
+                title: `📊 Liasse — ${c.nom_client}`,
+                start: toLocalDateStr(deadline),
+                allDay: true,
+                backgroundColor: '#e74c3c',
+                borderColor: '#e74c3c'
+            });
+        });
+
     return events;
 }
 
