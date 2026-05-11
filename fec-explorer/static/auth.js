@@ -92,6 +92,10 @@ function _showWarningBanner() {
         const m = Math.floor(secondsLeft / 60);
         const s = String(secondsLeft % 60).padStart(2, '0');
         msg.textContent = `⚠️ Session expire dans ${m}:${s} — Inactivité détectée`;
+        if (secondsLeft <= 60 && _warningBanner) {
+            _warningBanner.style.background = '#e74c3c';
+            btn.style.color = '#e74c3c';
+        }
     }, 1000);
 }
 
