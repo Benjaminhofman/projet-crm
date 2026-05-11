@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CRM — Connexion</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1a2a5e 0%, #273c75 55%, #2c4a9e 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 48px 44px 40px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+    animation: fadeUp 0.35s ease;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.logo {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.logo-icon {
+    font-size: 40px;
+    line-height: 1;
+    margin-bottom: 10px;
+}
+
+.logo h1 {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: #273c75;
+    letter-spacing: -0.02em;
+}
+
+.logo p {
+    font-size: 0.82rem;
+    color: #8895a7;
+    margin-top: 4px;
+}
+
+.field {
+    margin-bottom: 20px;
+}
+
+.field label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin-bottom: 7px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.password-wrap {
+    position: relative;
+}
+
+.field input {
+    width: 100%;
+    padding: 12px 44px 12px 14px;
+    border: 1.5px solid #dde2ec;
+    border-radius: 9px;
+    font-size: 0.97rem;
+    color: #2c3e50;
+    background: #f9fafc;
+    transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+    outline: none;
+}
+
+.field input:focus {
+    border-color: #273c75;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(39, 60, 117, 0.12);
+}
+
+.toggle-pw {
+    position: absolute;
+    right: 13px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #8895a7;
+    font-size: 17px;
+    padding: 2px;
+    line-height: 1;
+    transition: color 0.15s;
+}
+
+.toggle-pw:hover { color: #273c75; }
+
+.btn-login {
+    width: 100%;
+    padding: 13px;
+    background: #273c75;
+    color: white;
+    border: none;
+    border-radius: 9px;
+    font-size: 0.97rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: background 0.18s, transform 0.12s, box-shadow 0.18s;
+    margin-top: 6px;
+    position: relative;
+}
+
+.btn-login:hover:not(:disabled) {
+    background: #1e2f5e;
+    box-shadow: 0 4px 16px rgba(39, 60, 117, 0.35);
+    transform: translateY(-1px);
+}
+
+.btn-login:active:not(:disabled) { transform: translateY(0); }
+
+.btn-login:disabled {
+    background: #8895a7;
+    cursor: not-allowed;
+}
+
+.spinner {
+    display: none;
+    width: 17px;
+    height: 17px;
+    border: 2.5px solid rgba(255,255,255,0.35);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+@keyframes spin {
+    to { transform: translateY(-50%) rotate(360deg); }
+}
+
+.error-msg {
+    display: none;
+    background: #fff2f2;
+    border: 1px solid #ffcdd2;
+    border-left: 4px solid #e74c3c;
+    color: #c0392b;
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 0.87rem;
+    margin-top: 16px;
+    animation: shake 0.35s ease;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25%       { transform: translateX(-6px); }
+    75%       { transform: translateX(6px); }
+}
+
+.footer {
+    text-align: center;
+    margin-top: 28px;
+    font-size: 0.75rem;
+    color: #b0bac8;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+    <div class="logo">
+        <div class="logo-icon">📊</div>
+        <h1>CRM Clients</h1>
+        <p>Espace collaborateurs comptables</p>
+    </div>
+
+    <form id="login-form" onsubmit="handleLogin(event)">
+
+        <div class="field">
+            <label for="password">Mot de passe</label>
+            <div class="password-wrap">
+                <input
+                    type="password"
+                    id="password"
+                    placeholder="Entrez votre mot de passe"
+                    autocomplete="current-password"
+                    autofocus
+                    required
+                />
+                <button type="button" class="toggle-pw" onclick="togglePw()" title="Afficher / masquer">
+                    <span id="pw-eye">👁</span>
+                </button>
+            </div>
+        </div>
+
+        <button type="submit" class="btn-login" id="btn-submit">
+            Connexion
+            <span class="spinner" id="spinner"></span>
+        </button>
+
+        <div class="error-msg" id="error-msg"></div>
+
+    </form>
+
+    <div class="footer">Accès réservé aux collaborateurs autorisés</div>
+
+</div>
+
+<script>
+function togglePw() {
+    const inp = document.getElementById('password');
+    const eye = document.getElementById('pw-eye');
+    if (inp.type === 'password') {
+        inp.type = 'text';
+        eye.textContent = '🙈';
+    } else {
+        inp.type = 'password';
+        eye.textContent = '👁';
+    }
+}
+
+function showError(msg) {
+    const el = document.getElementById('error-msg');
+    el.textContent = msg;
+    el.style.display = 'block';
+    // relance l'animation shake
+    el.style.animation = 'none';
+    el.offsetHeight;
+    el.style.animation = '';
+}
+
+function hideError() {
+    document.getElementById('error-msg').style.display = 'none';
+}
+
+function setLoading(on) {
+    const btn     = document.getElementById('btn-submit');
+    const spinner = document.getElementById('spinner');
+    btn.disabled          = on;
+    spinner.style.display = on ? 'block' : 'none';
+    btn.textContent       = on ? 'Connexion en cours…' : 'Connexion';
+    if (on) btn.appendChild(spinner);
+}
+
+async function handleLogin(e) {
+    e.preventDefault();
+    hideError();
+
+    const password = document.getElementById('password').value;
+    if (!password) return;
+
+    setLoading(true);
+
+    try {
+        const res = await fetch('/api/auth/login', {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify({ password }),
+        });
+
+        const data = await res.json();
+
+        if (res.ok && data.token) {
+            sessionStorage.setItem('crm_token', data.token);
+            window.location.href = 'index.html';
+        } else {
+            setLoading(false);
+            showError(data.detail || 'Mot de passe incorrect.');
+        }
+    } catch {
+        setLoading(false);
+        showError('Impossible de joindre le serveur. Vérifiez votre connexion.');
+    }
+}
+
+// Si déjà connecté, rediriger directement
+(async () => {
+    const token = sessionStorage.getItem('crm_token');
+    if (!token) return;
+    try {
+        const res  = await fetch('/api/auth/verify', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        const data = await res.json();
+        if (data.valid) window.location.href = 'index.html';
+    } catch { /* token invalide, on reste sur login */ }
+})();
+</script>
+
+</body>
+</html>
