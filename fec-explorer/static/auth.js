@@ -1,8 +1,43 @@
+// ── Constantes inactivité ─────────────────────────────────────────────────────
+
+const _INACTIVITY_LOGOUT_MS  = 60 * 60 * 1000; // 60 min
+const _INACTIVITY_WARNING_MS = 55 * 60 * 1000; // 55 min
+
+let _logoutTimer  = null;
+let _warningTimer = null;
+let _warningSent  = false;
+
 // ── Déconnexion ───────────────────────────────────────────────────────────────
 
 function logout() {
     sessionStorage.removeItem('crm_token');
     window.location.replace('/login.html');
+}
+
+// ── Gestion du timer d'inactivité ─────────────────────────────────────────────
+
+function _resetInactivityTimers() {
+    clearTimeout(_logoutTimer);
+    clearTimeout(_warningTimer);
+    _warningSent = false;
+
+    _warningTimer = setTimeout(() => {
+        if (!_warningSent) {
+            _warningSent = true;
+            alert('Déconnexion dans 5 minutes pour inactivité.');
+        }
+    }, _INACTIVITY_WARNING_MS);
+
+    _logoutTimer = setTimeout(() => {
+        logout();
+    }, _INACTIVITY_LOGOUT_MS);
+}
+
+function _startInactivityWatch() {
+    ['mousemove', 'keydown', 'click', 'scroll'].forEach(evt => {
+        document.addEventListener(evt, _resetInactivityTimers, { passive: true });
+    });
+    _resetInactivityTimers();
 }
 
 // ── Injection bouton Déconnexion ───────────────────────────────────────────────
@@ -61,6 +96,7 @@ async function checkAuth() {
             window.location.replace('/login.html');
         } else {
             injectLogoutButton();
+            _startInactivityWatch();
         }
     } catch {
         // Erreur réseau transitoire — on ne redirige pas pour ne pas bloquer l'accès
