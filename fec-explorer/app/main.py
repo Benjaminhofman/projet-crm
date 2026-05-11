@@ -234,10 +234,10 @@ def auth_login(body: LoginRequest, request: Request):
     # Succès : reset du compteur pour cette IP
     _login_attempts.pop(ip, None)
 
-    expiry  = now + timedelta(hours=24)
+    expiry  = now + timedelta(hours=1)
     payload = {"sub": "crm_user", "exp": expiry}
     token   = jwt.encode(payload, jwt_secret, algorithm=_JWT_ALGO)
-    return {"token": token, "expiry": "24h"}
+    return {"token": token, "expiry": "1h"}
 
 
 @app.get("/api/auth/verify", summary="Vérifie la validité d'un token JWT (Authorization: Bearer <token>)")
@@ -249,8 +249,10 @@ def auth_verify(authorization: str = Header(default="")):
         return {"valid": False, "reason": "Header Authorization manquant ou mal formé"}
     token = authorization[len("Bearer "):]
     try:
-        jwt.decode(token, jwt_secret, algorithms=[_JWT_ALGO])
-        return {"valid": True}
+        claims     = jwt.decode(token, jwt_secret, algorithms=[_JWT_ALGO])
+        exp        = claims.get("exp")
+        expires_in = int(exp - datetime.now(timezone.utc).timestamp()) if exp else None
+        return {"valid": True, "expires_in": expires_in}
     except JWTError:
         return {"valid": False, "reason": "Token invalide ou expiré"}
 
