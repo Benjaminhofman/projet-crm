@@ -41,7 +41,7 @@ body {
 
 <div class="header">
     <a href="index.html" class="back">⬅ Retour</a>
-    <h2>📅 Calendrier</h2>
+    <h2>🎂 Calendrier des anniversaires</h2>
 </div>
 
 <div id="calendar"></div>
@@ -185,281 +185,40 @@ async function loadCalendar() {
 
     const data = await fetchClients();
 
-    const aujourd_hui = new Date();
-    aujourd_hui.setHours(0, 0, 0, 0);
+    const currentYear = new Date().getFullYear(); // 🔥 dynamique
 
+    // 🔥 transformation des anniversaires en events
     const events = data
         .filter(c => c["anniversaire"])
         .map(c => {
-            // Parsing manuel pour éviter le décalage UTC→local de new Date("yyyy-mm-dd")
-            const [anneeNaissance, moisRaw, jourRaw] = c["anniversaire"].split('-').map(Number);
-            const mois = moisRaw - 1; // 0-based pour le constructeur Date
-            const jour = jourRaw;
 
-            // Prochain anniversaire : année courante, ou suivante si déjà passé
-            let prochainAnniv = new Date(aujourd_hui.getFullYear(), mois, jour);
-            if (prochainAnniv < aujourd_hui) {
-                prochainAnniv = new Date(aujourd_hui.getFullYear() + 1, mois, jour);
-            }
+            const date = new Date(c["anniversaire"]);
 
-            // Âge qu'aura le client à son prochain anniversaire
-            const ageFutur = prochainAnniv.getFullYear() - anneeNaissance;
-            const labelAge = anneeNaissance > 1900 ? ` (${ageFutur} ans)` : "";
+            const month = String(date.getMonth() + 1).padStart(2,'0');
+            const day = String(date.getDate()).padStart(2,'0');
 
-            // Construction depuis les parties locales pour éviter la reconversion UTC de toISOString()
-            const yyyy = prochainAnniv.getFullYear();
-            const mm   = String(prochainAnniv.getMonth() + 1).padStart(2, '0');
-            const dd   = String(prochainAnniv.getDate()).padStart(2, '0');
-            const dateStr = `${yyyy}-${mm}-${dd}T00:00:00`; // T00:00:00 sans Z → interprétation locale par FullCalendar
+            // 🔥 utilisation du champ AGE Airtable
+            const age = c.age ? ` (${c.age} ans)` : "";
 
             return {
-                title: `${c.nom_client} 🎂${labelAge}`,
-                start: dateStr,
+                title: `${c.nom_client} 🎂${age}`,
+                start: `${currentYear}-${month}-${day}`, // 🔥 clé du système
                 allDay: true
             };
         });
-
-    const fiscalEvents = computeFiscalEvents(data);
 
     const calendar = new FullCalendar.Calendar(document.getElementById('calendar'), {
         initialView: 'dayGridMonth',
         locale: 'fr',
         height: "auto",
-        events: [...events, ...fiscalEvents]
+        events: events
     });
 
     calendar.render();
 }
 
-// Génère les événements fiscaux fixes et groupés
-function computeFiscalEvents(clients) {
-    const aujourd_hui = new Date();
-    aujourd_hui.setHours(0, 0, 0, 0);
-
-    // Calcule la prochaine occurrence d'une date fixe (mois 1-based, jour)
-    function prochaineFecheFixe(mois, jour) {
-        let d = new Date(aujourd_hui.getFullYear(), mois - 1, jour);
-        if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, mois - 1, jour);
-        const yyyy = d.getFullYear();
-        const mm   = String(d.getMonth() + 1).padStart(2, '0');
-        const dd   = String(d.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}T00:00:00`;
-    }
-
-    const events = [];
-
-    // 2561 — 16 février — 1 événement par client avec dividendes > 1
-    clients
-        .filter(c => parseFloat(c.dividendes) > 1)
-        .forEach(c => {
-            events.push({
-                title: `📋 2561 — ${c.nom_client}`,
-                start: prochaineFecheFixe(2, 16),
-                allDay: true,
-                backgroundColor: '#f39c12',
-                borderColor: '#f39c12'
-            });
-        });
-
-    // DAS2 — 5 mai
-    events.push({
-        title: '📋 DAS2',
-        start: prochaineFecheFixe(5, 5),
-        allDay: true,
-        backgroundColor: '#95a5a6',
-        borderColor: '#95a5a6'
-    });
-
-    // DECLOYER — 20 mai
-    events.push({
-        title: '📋 DECLOYER',
-        start: prochaineFecheFixe(5, 20),
-        allDay: true,
-        backgroundColor: '#95a5a6',
-        borderColor: '#95a5a6'
-    });
-
-    // Liasse — 1 événement par client où is=true ou liasse=true
-    // Deadline : 20 mai si clôture 31/12, sinon clôture + 3 mois + 15j
-    function isTruthy(val) {
-        return val === true || val === 'true' || val === 't';
-    }
-
-    function toLocalDateStr(d) {
-        const yyyy = d.getFullYear();
-        const mm   = String(d.getMonth() + 1).padStart(2, '0');
-        const dd   = String(d.getDate()).padStart(2, '0');
-        return `${yyyy}-${mm}-${dd}T00:00:00`;
-    }
-
-    clients
-        .filter(c => (isTruthy(c.is) || isTruthy(c.liasse)) && c.date_de_cloture)
-        .forEach(c => {
-            const parts = c.date_de_cloture.split('-').map(Number);
-            const moisCloture = parts[1];
-            const jourCloture = parts[2];
-
-            let deadline;
-            if (moisCloture === 12 && jourCloture === 31) {
-                // Clôture 31/12 → deadline fixe 20 mai
-                deadline = new Date(aujourd_hui.getFullYear(), 4, 20);
-                if (deadline < aujourd_hui) deadline = new Date(aujourd_hui.getFullYear() + 1, 4, 20);
-            } else {
-                // Deadline = dernier jour du 3e mois après clôture + 15j calendaires
-                // new Date(annee, moisCloture + 3, 0) → day 0 = dernier jour du mois précédent
-                // ex: clôture 31/03 → new Date(2026, 6, 0) = 30 juin → +15 = 15 juillet ✅
-                const base = new Date(aujourd_hui.getFullYear(), moisCloture + 3, 0);
-                deadline = new Date(base.getFullYear(), base.getMonth(), base.getDate() + 15);
-                if (deadline < aujourd_hui) {
-                    const baseN1 = new Date(aujourd_hui.getFullYear() + 1, moisCloture + 3, 0);
-                    deadline = new Date(baseN1.getFullYear(), baseN1.getMonth(), baseN1.getDate() + 15);
-                }
-            }
-
-            events.push({
-                title: `📊 Liasse — ${c.nom_client}`,
-                start: toLocalDateStr(deadline),
-                allDay: true,
-                backgroundColor: '#e74c3c',
-                borderColor: '#e74c3c'
-            });
-        });
-
-    // IS — Solde et acomptes
-    clients
-        .filter(c => isTruthy(c.is) && c.date_de_cloture)
-        .forEach(c => {
-            const parts = c.date_de_cloture.split('-').map(Number);
-            const moisCloture = parts[1];
-            const jourCloture = parts[2];
-
-            // Solde IS — 15 du 4e mois après la clôture (exception 31/12 → mai = +5)
-            // Formule générale : ((moisCloture - 1 + 4) % 12) + 1, sauf mois=12 → 5
-            const moisSolde = moisCloture === 12 ? 5 : ((moisCloture - 1 + 4) % 12) + 1;
-
-            // Debug — clients dont le solde IS tombe en mai (moisSolde=5)
-            if (moisSolde === 5) {
-                console.log(`[IS Solde mai] ${c.nom_client} | moisCloture=${moisCloture} jourCloture=${jourCloture} | date_de_cloture=${c.date_de_cloture}`);
-            }
-
-            const solde = new Date(aujourd_hui.getFullYear(), moisSolde - 1, 15);
-            if (solde < aujourd_hui) solde.setFullYear(aujourd_hui.getFullYear() + 1);
-            events.push({
-                title: `💰 Solde IS — ${c.nom_client}`,
-                start: toLocalDateStr(solde),
-                allDay: true,
-                backgroundColor: '#e67e22',
-                borderColor: '#e67e22'
-            });
-
-            // Acomptes IS — dates fixes pour tous les clients is=true
-            [3, 6, 9, 12].forEach(mois => {
-                const acompte = new Date(aujourd_hui.getFullYear(), mois - 1, 15);
-                if (acompte < aujourd_hui) acompte.setFullYear(aujourd_hui.getFullYear() + 1);
-                events.push({
-                    title: `💰 Acompte IS — ${c.nom_client}`,
-                    start: toLocalDateStr(acompte),
-                    allDay: true,
-                    backgroundColor: '#e67e22',
-                    borderColor: '#e67e22'
-                });
-            });
-        });
-
-    // CVAE — Solde 5 mai (tous) + acomptes 15 juin/sept (ca_r > 500 000 ou ca_r inconnu)
-    clients
-        .filter(c => isTruthy(c.cvae))
-        .forEach(c => {
-            // Solde — tous les clients CVAE
-            const solde = new Date(aujourd_hui.getFullYear(), 4, 5);
-            if (solde < aujourd_hui) solde.setFullYear(aujourd_hui.getFullYear() + 1);
-            events.push({
-                title: `📘 CVAE solde — ${c.nom_client}`,
-                start: toLocalDateStr(solde),
-                allDay: true,
-                backgroundColor: '#9b59b6',
-                borderColor: '#9b59b6'
-            });
-
-            // Acomptes — uniquement si ca_r > 500 000 ou ca_r non renseigné (sécurité)
-            const car = parseFloat(c.ca_r);
-            const acomptesRequis = isNaN(car) || c.ca_r === null || c.ca_r === '' || car > 500000;
-            if (acomptesRequis) {
-                [[6, 15], [9, 15]].forEach(([mois, jour]) => {
-                    const d = new Date(aujourd_hui.getFullYear(), mois - 1, jour);
-                    if (d < aujourd_hui) d.setFullYear(aujourd_hui.getFullYear() + 1);
-                    events.push({
-                        title: `📘 Acompte CVAE — ${c.nom_client}`,
-                        start: toLocalDateStr(d),
-                        allDay: true,
-                        backgroundColor: '#9b59b6',
-                        borderColor: '#9b59b6'
-                    });
-                });
-            }
-        });
-
-    // TVS
-    clients
-        .filter(c => isTruthy(c.tvs))
-        .forEach(c => {
-            const parts = (c.date_de_cloture || '').split('-').map(Number);
-            const moisCloture = parts[1];
-            const jourCloture = parts[2];
-            let d;
-            if (isTruthy(c.ca12)) {
-                if (moisCloture === 12 && jourCloture === 31) {
-                    d = new Date(aujourd_hui.getFullYear(), 4, 5);
-                    if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, 4, 5);
-                } else {
-                    d = new Date(aujourd_hui.getFullYear(), moisCloture + 3, 0);
-                    if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, moisCloture + 3, 0);
-                }
-            } else {
-                d = new Date(aujourd_hui.getFullYear(), 0, 27);
-                if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, 0, 27);
-            }
-            events.push({
-                title: `🚗 TVS — ${c.nom_client}`,
-                start: toLocalDateStr(d),
-                allDay: true,
-                backgroundColor: '#3498db',
-                borderColor: '#3498db'
-            });
-        });
-
-    // CA12
-    clients
-        .filter(c => isTruthy(c.ca12))
-        .forEach(c => {
-            // date_de_cloture au format YYYY-MM-DD → split('-')
-            const [, moisClo, jourClo] = (c.date_de_cloture || '').split('-').map(Number);
-            let d;
-            if (moisClo === 12 && jourClo === 31) {
-                d = new Date(aujourd_hui.getFullYear(), 4, 5);
-                if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, 4, 5);
-            } else {
-                // Dernier jour du mois (moisClo + 3), année+1 si moisClo+3 > 12
-                d = new Date(aujourd_hui.getFullYear(), moisClo + 3, 0);
-                if (d < aujourd_hui) d = new Date(aujourd_hui.getFullYear() + 1, moisClo + 3, 0);
-            }
-            events.push({
-                title: `🟢 CA12 — ${c.nom_client}`,
-                start: toLocalDateStr(d),
-                allDay: true,
-                backgroundColor: '#27ae60',
-                borderColor: '#27ae60'
-            });
-        });
-
-    return events;
-}
-
 loadCalendar();
 </script>
 
-
-<script src="/auth.js"></script>
-<script>document.addEventListener('DOMContentLoaded', checkAuth);</script>
 </body>
 </html>
