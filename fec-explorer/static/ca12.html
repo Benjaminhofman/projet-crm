@@ -5,21 +5,18 @@
 <title>Suivi CA12</title>
 <link rel="stylesheet" href="decl-shared.css">
 <style>
-/* Wrapper scrollable horizontal */
+/* Wrapper tableau */
 .table-scroll {
-    overflow-x: auto;
-    border-radius: 0 0 8px 8px;
+    border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
 }
-/* Barre scroll en haut */
-#scroll-top {
-    overflow-x: scroll;
-    overflow-y: hidden;
-    height: 18px;
-    border-radius: 8px 8px 0 0;
-    box-shadow: 0 -1px 4px rgba(0,0,0,0.05);
+/* En-tête collant */
+.table-scroll table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #1e3a5f;
 }
-#scroll-top-inner { height: 1px; }
 .table-scroll table {
     overflow: visible;
     border-radius: 0;
@@ -69,8 +66,7 @@
     <input id="filter-cloture" placeholder="Clôture...">
 </div>
 
-<div style="height:calc(100vh - 280px);overflow-y:auto;overflow-x:hidden;">
-<div id="scroll-top"><div id="scroll-top-inner"></div></div>
+<div style="height:calc(100vh - 320px);overflow-y:auto;overflow-x:scroll;">
 <div class="table-scroll" id="table-scroll">
 <table>
 <thead><tr id="table-head">
@@ -296,16 +292,8 @@ display = function(data) {
 
     table.innerHTML = '';
     table.appendChild(frag);
-    requestAnimationFrame(() => {
-        document.getElementById('scroll-top-inner').style.width = _scroller.scrollWidth + 'px';
-    });
 };
 
-const _scroller  = document.getElementById('table-scroll');
-const _scrollTop = document.getElementById('scroll-top');
-
-_scrollTop.addEventListener('scroll', () => { _scroller.scrollLeft  = _scrollTop.scrollLeft; });
-_scroller.addEventListener('scroll',  () => { _scrollTop.scrollLeft = _scroller.scrollLeft; });
 
 initDeclaratifPage({
     titre: "Suivi CA12",
