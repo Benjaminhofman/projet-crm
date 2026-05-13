@@ -565,8 +565,15 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 if not (_COL_RE.match(str(k)) and k in col_types):
                     continue
                 coerced = _coerce_import_value(v, col_types[k])
+                coerced_debug = coerced  # pour le log
+                if k == "mai_cvae":
+                    print(f"[DEBUG-IMPORT] siret={siret} | mai_cvae brut={v!r} | coerce={coerced!r} | skip={coerced is _SKIP}")
                 if coerced is not _SKIP:
                     fields[k] = coerced  # None = NULL, valeur = ecriture
+
+            # LOG: presence de mai_cvae dans fields apres filtrage
+            if "mai_cvae" in item:
+                print(f"[DEBUG-IMPORT] siret={siret} | mai_cvae in fields={'mai_cvae' in fields} | valeur fields={fields.get('mai_cvae', '<absent>')!r}")
 
             if not fields:
                 errors.append(f"Ligne {i + 1} ({siret}) : aucun champ valide")
@@ -578,6 +585,11 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 f'"{k}" = EXCLUDED."{k}"' for k in fields if k != "siret"
             )
             values = list(fields.values())
+
+            # LOG: clause SET complete si mai_cvae present
+            if "mai_cvae" in fields:
+                mai_idx = list(fields.keys()).index("mai_cvae")
+                print(f"[DEBUG-IMPORT] siret={siret} | SET clause={updates} | values[mai_cvae]={values[mai_idx]!r}")
 
             try:
                 with conn.cursor() as cur:
