@@ -138,18 +138,23 @@ _BOOL_STRS     = _BOOL_TRUE | _BOOL_FALSE
 _NUMERIC_TYPES = ("numeric", "integer", "bigint", "smallint", "real", "double", "decimal", "money")
 _DATE_TYPES    = ("date", "timestamp")
 
+# Sentinelle : distingue "valeur invalide → ignorer le champ"
+# de None qui signifie "valeur vide → écrire NULL en base"
+_SKIP = object()
+
 
 def _coerce_import_value(val: Any, data_type: str) -> Any:
     """
     Convertit val selon le type PostgreSQL de la colonne cible.
-    Retourne None pour les valeurs vides ou non convertibles
-    (le champ sera alors exclu de l'UPSERT).
+    - None  -> écrire NULL en base (valeur vide explicite)
+    - _SKIP -> ignorer ce champ (valeur non convertible)
+    - value -> écrire la valeur convertie
     """
     if val is None:
-        return None
+        return None  # None explicite -> NULL
     s = str(val).strip()
     if not s:
-        return None
+        return None  # chaine vide -> NULL (efface la valeur en base)
     dt = data_type.lower()
 
     # Date / timestamp : DD/MM/YYYY → ISO YYYY-MM-DD
@@ -166,16 +171,16 @@ def _coerce_import_value(val: Any, data_type: str) -> Any:
             return True
         if v in _BOOL_FALSE:
             return False
-        return None  # valeur non reconnue → NULL (champ ignoré)
+        return _SKIP  # valeur non reconnue -> ignorer le champ
 
     # Numeric
     if any(t in dt for t in _NUMERIC_TYPES):
         if s.lower() in _BOOL_STRS:
-            return None  # "oui"/"non" dans un champ numérique → NULL
+            return _SKIP  # "oui"/"non" dans un champ numerique -> ignorer
         try:
             return float(s.replace(",", ".").replace(" ", "").replace(" ", ""))
         except ValueError:
-            return None
+            return _SKIP  # texte non convertible -> ignorer le champ
 
     # Texte et autres types : inchangé
     return s
@@ -560,8 +565,8 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 if not (_COL_RE.match(str(k)) and k in col_types):
                     continue
                 coerced = _coerce_import_value(v, col_types[k])
-                if coerced is not None:
-                    fields[k] = coerced
+                if coerced is not _SKIP:
+                    fields[k] = coerced  # None = NULL, valeur = ecriture
 
             if not fields:
                 errors.append(f"Ligne {i + 1} ({siret}) : aucun champ valide")
