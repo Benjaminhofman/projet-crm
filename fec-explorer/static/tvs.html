@@ -226,7 +226,7 @@ display = function(data) {
             <td>${esc(c.assistant)}</td>
             <td>${esc(c.collaborateur)}</td>
             <td>${esc(c.annee)}</td>
-            <td>${esc(c.date_de_cloture)}</td>
+            <td>${c.date_de_cloture ? c.date_de_cloture.slice(8,10) + '/' + c.date_de_cloture.slice(5,7) : ''}</td>
         `;
 
         TVS_COLS.forEach((col, idx) => {
