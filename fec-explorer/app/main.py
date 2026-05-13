@@ -561,6 +561,12 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 continue
 
             # Filtre + conversion typée : seules les colonnes réelles sont conservées
+            # Diagnostic : colonnes du CSV absentes de la table PostgreSQL
+            cols_csv     = set(item.keys())
+            cols_absents = [k for k in cols_csv if k not in col_types and _COL_RE.match(str(k))]
+            if cols_absents and i == 0:  # afficher seulement pour la 1ere ligne
+                print(f"[COL-FILTER] siret={siret} | colonnes CSV absentes de la table: {sorted(cols_absents)}")
+                print(f"[COL-FILTER] colonnes connues de col_types (sample): {sorted(col_types.keys())[:30]}")
             fields = {}
             for k, v in item.items():
                 if not (_COL_RE.match(str(k)) and k in col_types):
