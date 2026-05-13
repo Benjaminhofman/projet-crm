@@ -64,10 +64,17 @@ app.add_middleware(
 )
 
 
+_MIGRATE_PUBLIC = {
+    "/api/migrate/tvs_mois_setup",
+    "/api/migrate/ca12_solde_setup",
+}
+
 @app.middleware("http")
 async def admin_token_middleware(request: Request, call_next):
     """Protège /api/migrate/* et /api/debug/* par Bearer token (var env ADMIN_TOKEN)."""
     path = request.url.path
+    if path in _MIGRATE_PUBLIC:
+        return await call_next(request)
     if path.startswith("/api/migrate/") or path.startswith("/api/debug/"):
         admin_token = os.environ.get("ADMIN_TOKEN", "")
         auth_header = request.headers.get("Authorization", "")
