@@ -539,7 +539,8 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
         raise HTTPException(status_code=400, detail="Liste vide.")
 
     conn = _get_db_conn()
-    upserted = 0
+    upserted     = 0  # lignes sans erreur psycopg2
+    rows_affected = 0  # somme des cur.rowcount reels
     errors: List[str] = []
 
     try:
@@ -591,6 +592,11 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 mai_idx = list(fields.keys()).index("mai_cvae")
                 print(f"[DEBUG-IMPORT] siret={siret} | SET clause={updates} | values[mai_cvae]={values[mai_idx]!r}")
 
+            # Verification integrite siret : la valeur dans fields doit etre identique
+            siret_in_fields = str(fields.get("siret", "")).strip()
+            if siret_in_fields != siret:
+                print(f"[UPSERT-SIRET-MISMATCH] siret var={siret!r} != siret fields={siret_in_fields!r}")
+
             try:
                 with conn.cursor() as cur:
                     if updates:
@@ -606,11 +612,13 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                             f"ON CONFLICT (siret) DO NOTHING",
                             values,
                         )
-                    print(f"[UPSERT-RESULT] siret={siret} | rowcount={cur.rowcount} | fields={fields}")
-                    if cur.rowcount == 0:
-                        print(f"[UPSERT-WARN] siret={siret} | rowcount=0 -> aucune ligne modifiee (ON CONFLICT DO NOTHING ?)")
+                    rc = cur.rowcount
+                    print(f"[UPSERT-RESULT] siret={siret} | rowcount={rc} | fields={fields}")
+                    if rc == 0:
+                        print(f"[UPSERT-WARN] siret={siret} | rowcount=0 -> siret absent en base et DO NOTHING, ou siret={siret!r} ne correspond a aucune ligne")
                 conn.commit()
-                upserted += 1
+                upserted     += 1
+                rows_affected += rc
             except psycopg2.Error as e:
                 conn.rollback()
                 print(f"[UPSERT-ERROR] siret={siret} | pgerror={e.pgerror!r} | str={str(e)!r}")
@@ -620,7 +628,7 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 print(f"[UPSERT-EXCEPTION] siret={siret} | type={type(e).__name__} | msg={str(e)!r}")
                 errors.append(f"{siret} : exception inattendue : {e}")
 
-        return {"success": True, "upserted": upserted, "errors": errors}
+        return {"success": True, "upserted": upserted, "rows_affected": rows_affected, "errors": errors}
     finally:
         conn.close()
 
