@@ -60,7 +60,7 @@
     <input id="filter-cloture" placeholder="Clôture...">
 </div>
 
-<div id="scroll-mirror" style="position:fixed;bottom:0;left:0;overflow-x:auto;overflow-y:hidden;width:100vw;height:18px;z-index:100"><div id="scroll-mirror-inner"></div></div>
+<div id="scroll-mirror" style="position:fixed;bottom:0;left:0;overflow-x:auto;overflow-y:hidden;width:100vw;height:18px;z-index:100;margin:0;padding:0;box-sizing:border-box"><div id="scroll-mirror-inner"></div></div>
 <div class="table-scroll" id="table-scroll">
 <table>
 <thead><tr id="table-head">
@@ -295,15 +295,20 @@ display = function(data) {
 
     table.innerHTML = '';
     table.appendChild(frag);
-    requestAnimationFrame(() => requestAnimationFrame(syncMirrorWidth));
 };
 
-const _mirror   = document.getElementById('scroll-mirror');
-const _scroller = document.getElementById('table-scroll');
+const _mirror      = document.getElementById('scroll-mirror');
+const _mirrorInner = document.getElementById('scroll-mirror-inner');
+const _scroller    = document.getElementById('table-scroll');
 
-function syncMirrorWidth() {
-    document.getElementById('scroll-mirror-inner').style.width = _scroller.scrollWidth + 'px';
-}
+const syncMirror = () => {
+    _mirrorInner.style.width = _scroller.scrollWidth + 'px';
+    _mirror.style.width      = window.innerWidth + 'px';
+};
+
+new ResizeObserver(syncMirror).observe(_scroller);
+window.addEventListener('resize', syncMirror);
+syncMirror();
 
 _scroller.addEventListener('scroll', () => { _mirror.scrollLeft   = _scroller.scrollLeft; });
 _mirror.addEventListener('scroll',   () => { _scroller.scrollLeft = _mirror.scrollLeft; });
