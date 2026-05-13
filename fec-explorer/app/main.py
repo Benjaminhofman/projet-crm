@@ -594,22 +594,31 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
             try:
                 with conn.cursor() as cur:
                     if updates:
-                        cur.execute(
+                        sql = (
                             f"INSERT INTO clients ({cols}) VALUES ({placeholders}) "
-                            f"ON CONFLICT (siret) DO UPDATE SET {updates}",
-                            values,
+                            f"ON CONFLICT (siret) DO UPDATE SET {updates}"
                         )
+                        print(f"[UPSERT-SQL] siret={siret} | SQL={sql} | values={values}")
+                        cur.execute(sql, values)
                     else:
                         cur.execute(
                             f"INSERT INTO clients ({cols}) VALUES ({placeholders}) "
                             f"ON CONFLICT (siret) DO NOTHING",
                             values,
                         )
+                    print(f"[UPSERT-RESULT] siret={siret} | rowcount={cur.rowcount} | fields={fields}")
+                    if cur.rowcount == 0:
+                        print(f"[UPSERT-WARN] siret={siret} | rowcount=0 -> aucune ligne modifiee (ON CONFLICT DO NOTHING ?)")
                 conn.commit()
                 upserted += 1
             except psycopg2.Error as e:
                 conn.rollback()
+                print(f"[UPSERT-ERROR] siret={siret} | pgerror={e.pgerror!r} | str={str(e)!r}")
                 errors.append(f"{siret} : {e.pgerror or str(e)}")
+            except Exception as e:
+                conn.rollback()
+                print(f"[UPSERT-EXCEPTION] siret={siret} | type={type(e).__name__} | msg={str(e)!r}")
+                errors.append(f"{siret} : exception inattendue : {e}")
 
         return {"success": True, "upserted": upserted, "errors": errors}
     finally:
