@@ -518,6 +518,13 @@ async def import_clients_csv(file: UploadFile = File(...)):
                         parts = val.split("/")
                         if len(parts) == 3:
                             val = f"{parts[2]}-{parts[1]}-{parts[0]}"
+                    elif col_types[col] == "boolean":
+                        if val.lower() in ("oui", "true", "1", "yes"):
+                            val = True
+                        elif val.lower() in ("non", "false", "0", "no"):
+                            val = False
+                        else:
+                            val = None
                     updates[col] = val
 
             cols   = ["siret"] + list(updates.keys())
