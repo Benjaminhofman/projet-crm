@@ -563,20 +563,19 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
 
             if i == 0:
                 print(f"[CSV-COLS] colonnes brutes du CSV: {list(item.keys())}")
+                cols_absents = [k for k in item.keys() if k not in col_types]
+                if cols_absents:
+                    print(f"[COL-FILTER] colonnes CSV absentes de col_types (ignorées): {sorted(cols_absents)}")
+                else:
+                    print(f"[COL-FILTER] toutes les colonnes CSV sont connues en base")
 
-            # Filtre + conversion typée : seules les colonnes réelles sont conservées
-            # Diagnostic : colonnes du CSV absentes de la table PostgreSQL
-            cols_csv     = set(item.keys())
-            cols_absents = [k for k in cols_csv if k not in col_types and _COL_RE.match(str(k))]
-            if cols_absents and i == 0:  # afficher seulement pour la 1ere ligne
-                print(f"[COL-FILTER] siret={siret} | colonnes CSV absentes de la table: {sorted(cols_absents)}")
-                print(f"[COL-FILTER] colonnes connues de col_types (sample): {sorted(col_types.keys())[:30]}")
+            # Seul filtre : la colonne doit exister dans PostgreSQL
+            # "" → None (NULL), "0" → 0.0, valeur invalide → _SKIP (ignorée)
             fields = {}
             for k, v in item.items():
-                if not (_COL_RE.match(str(k)) and k in col_types):
+                if k not in col_types:
                     continue
                 coerced = _coerce_import_value(v, col_types[k])
-                coerced_debug = coerced  # pour le log
                 if k == "mai_cvae":
                     print(f"[DEBUG-IMPORT] siret={siret} | mai_cvae brut={v!r} | coerce={coerced!r} | skip={coerced is _SKIP}")
                 if coerced is not _SKIP:
