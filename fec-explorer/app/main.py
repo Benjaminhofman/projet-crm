@@ -283,7 +283,9 @@ def get_calendrier_fiscal():
         with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
             cur.execute("""
                 SELECT siret, nom_client, date_de_cloture,
-                       is, cvae, tvs, ca12, liasse, dividendes, ca_r
+                       is, cvae, tvs, ca12, liasse, dividendes, ca_r,
+                       cotisation_fonciere_entreprise, cfe_r,
+                       collaborateur, assistant
                 FROM clients
                 ORDER BY nom_client
             """)

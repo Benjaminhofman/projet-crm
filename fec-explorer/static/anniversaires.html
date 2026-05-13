@@ -553,6 +553,17 @@ function computeFiscalEvents(clients) {
             add('🟢 CA12', toLocalDateStr(d), '#27ae60', c.nom_client);
         });
 
+    // CFE — acompte 15 juin (si cfe_r > 3000) + solde 15 décembre
+    clients
+        .filter(c => isTruthy(c.cotisation_fonciere_entreprise))
+        .forEach(c => {
+            const cfr = parseFloat(c.cfe_r);
+            if (!isNaN(cfr) && cfr > 3000) {
+                add('🏢 CFE acompte', prochaineDateFixe(6, 15), '#1abc9c', c.nom_client);
+            }
+            add('🏢 CFE solde', prochaineDateFixe(12, 15), '#1abc9c', c.nom_client);
+        });
+
     // Conversion Map → événements FullCalendar
     const events = [];
     grouped.forEach(val => {
