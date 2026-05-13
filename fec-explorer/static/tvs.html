@@ -42,7 +42,6 @@
 .table-scroll table td:nth-child(-n+6) { background: #fff; }
 .table-scroll table tr:nth-child(even) td:nth-child(-n+6) { background: #f8f9fc; }
 .table-scroll table tr:hover td:nth-child(-n+6) { background: #e8f0fe; }
-#scroll-mirror-inner { height: 1px; }
 </style>
 </head>
 <body>
@@ -62,7 +61,6 @@
     <input id="filter-cloture" placeholder="Clôture...">
 </div>
 
-<div id="scroll-mirror" style="position:fixed;bottom:0;left:0;overflow-x:auto;overflow-y:hidden;width:100vw;height:18px;z-index:100;margin:0;padding:0;box-sizing:border-box"><div id="scroll-mirror-inner"></div></div>
 <div class="table-scroll" id="table-scroll">
 <table>
 <thead><tr id="table-head">
@@ -299,21 +297,6 @@ display = function(data) {
     table.appendChild(frag);
 };
 
-const _mirror      = document.getElementById('scroll-mirror');
-const _mirrorInner = document.getElementById('scroll-mirror-inner');
-const _scroller    = document.getElementById('table-scroll');
-
-const syncMirror = () => {
-    _mirrorInner.style.width = _scroller.scrollWidth + 'px';
-    _mirror.style.width      = window.innerWidth + 'px';
-};
-
-new ResizeObserver(syncMirror).observe(_scroller);
-window.addEventListener('resize', syncMirror);
-syncMirror();
-
-_scroller.addEventListener('scroll', () => { _mirror.scrollLeft   = _scroller.scrollLeft; });
-_mirror.addEventListener('scroll',   () => { _scroller.scrollLeft = _mirror.scrollLeft; });
 
 initDeclaratifPage({
     titre: "Suivi TVS",
