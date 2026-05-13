@@ -560,6 +560,9 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
                 errors.append(f"Ligne {i + 1} : siret manquant")
                 continue
 
+            if i == 0:
+                print(f"[CSV-COLS] colonnes brutes du CSV: {list(item.keys())}")
+
             # Filtre + conversion typée : seules les colonnes réelles sont conservées
             # Diagnostic : colonnes du CSV absentes de la table PostgreSQL
             cols_csv     = set(item.keys())
