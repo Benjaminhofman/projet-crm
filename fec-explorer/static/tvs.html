@@ -4,6 +4,41 @@
 <meta charset="UTF-8">
 <title>Suivi TVS</title>
 <link rel="stylesheet" href="decl-shared.css">
+<style>
+/* Wrapper scrollable horizontal */
+.table-scroll {
+    overflow-x: auto;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+}
+/* Le tableau s'étend librement — override decl-shared.css */
+.table-scroll table {
+    overflow: visible;
+    border-radius: 0;
+    box-shadow: none;
+    min-width: max-content;
+}
+/* Colonnes mois (7e colonne et au-delà) : 100px minimum */
+.table-scroll table th:nth-child(n+7),
+.table-scroll table td:nth-child(n+7) {
+    min-width: 100px;
+}
+.table-scroll table td:nth-child(n+7) input {
+    width: 74px;
+}
+/* 6 colonnes fixes : sticky left */
+.table-scroll table th:nth-child(1), .table-scroll table td:nth-child(1) { position: sticky; left: 0px;   min-width: 65px;  z-index: 2; }
+.table-scroll table th:nth-child(2), .table-scroll table td:nth-child(2) { position: sticky; left: 65px;  min-width: 160px; z-index: 2; }
+.table-scroll table th:nth-child(3), .table-scroll table td:nth-child(3) { position: sticky; left: 225px; min-width: 110px; z-index: 2; }
+.table-scroll table th:nth-child(4), .table-scroll table td:nth-child(4) { position: sticky; left: 335px; min-width: 120px; z-index: 2; }
+.table-scroll table th:nth-child(5), .table-scroll table td:nth-child(5) { position: sticky; left: 455px; min-width: 58px;  z-index: 2; }
+.table-scroll table th:nth-child(6), .table-scroll table td:nth-child(6) { position: sticky; left: 513px; min-width: 60px;  z-index: 2; border-right: 2px solid #c0c8e8; }
+/* Backgrounds explicites pour les sticky (évite la transparence) */
+.table-scroll table th:nth-child(-n+6) { background: #273c75; z-index: 3; }
+.table-scroll table td:nth-child(-n+6) { background: #fff; }
+.table-scroll table tr:nth-child(even) td:nth-child(-n+6) { background: #f8f9fc; }
+.table-scroll table tr:hover td:nth-child(-n+6) { background: #e8f0fe; }
+</style>
 </head>
 <body>
 
@@ -22,12 +57,14 @@
     <input id="filter-cloture" placeholder="Clôture...">
 </div>
 
+<div class="table-scroll">
 <table>
 <thead><tr id="table-head">
     <th>Code</th><th>Nom</th><th>Assistant</th><th>Collaborateur</th><th>Année</th><th>Clôture</th>
 </tr></thead>
 <tbody id="table"></tbody>
 </table>
+</div>
 
 <script>
 const API_URL = "/api";
