@@ -2039,6 +2039,28 @@ def migrate_tvs_mois_setup():
         conn.close()
 
 
+@app.get("/api/migrate/ca12_solde_setup", summary="Ajoute les 12 colonnes mensuelles CA12 solde (NUMERIC)")
+def migrate_ca12_solde_setup():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cols = [
+                "janvier_ca12_solde", "fevrier_ca12_solde", "mars_ca12_solde",
+                "avril_ca12_solde",   "mai_ca12_solde",     "juin_ca12_solde",
+                "juillet_ca12_solde", "aout_ca12_solde",    "septembre_ca12_solde",
+                "octobre_ca12_solde", "novembre_ca12_solde","decembre_ca12_solde",
+            ]
+            for col in cols:
+                cur.execute(f"ALTER TABLE clients ADD COLUMN IF NOT EXISTS {col} NUMERIC")
+        conn.commit()
+        return {"ok": True}
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
 # ── Static files ──────────────────────────────────────────────────────────────
 # Monté en dernier pour ne pas masquer les routes API.
 
