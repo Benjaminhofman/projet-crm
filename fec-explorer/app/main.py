@@ -2095,6 +2095,21 @@ def migrate_ca12_solde_setup():
         conn.close()
 
 
+@app.get("/api/migrate/fix_mai_tvs_type", summary="Convertit mai_tvs en NUMERIC")
+def migrate_fix_mai_tvs_type():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("ALTER TABLE clients ALTER COLUMN mai_tvs TYPE NUMERIC USING mai_tvs::numeric")
+        conn.commit()
+        return {"ok": True}
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
 @app.get("/api/migrate/cvae_acomptes_setup", summary="Ajoute les colonnes acompte CVAE juin et septembre")
 def migrate_cvae_acomptes_setup():
     conn = _get_db_conn()
