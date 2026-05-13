@@ -544,13 +544,14 @@ def import_clients(body: List[Dict[str, Any]] = Body(...)):
     errors: List[str] = []
 
     try:
-        # Récupère colonnes + types PostgreSQL une seule fois
+        # Rechargement dynamique à chaque appel — reflète le schéma actuel de la table
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT column_name, data_type FROM information_schema.columns "
                 "WHERE table_name = 'clients'"
             )
-            col_types = {row[0]: row[1] for row in cur.fetchall()}
+            col_types = {row[0]: row[1] for row in cur.fetchall()}  # variable locale, non cachée
+        print(f"[IMPORT-SCHEMA] {len(col_types)} colonnes chargées depuis information_schema: {sorted(col_types.keys())}")
 
         for i, item in enumerate(body):
             if not isinstance(item, dict):
