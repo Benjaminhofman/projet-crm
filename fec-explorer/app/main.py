@@ -486,6 +486,31 @@ def update_client(body: Dict[str, Any] = Body(...)):
         conn.close()
 
 
+@app.patch("/api/client/{siret}", summary="Met à jour un ou plusieurs champs d'un client (PATCH)")
+def patch_client(siret: str, body: Dict[str, Any] = Body(...)):
+    conn = _get_db_conn()
+    try:
+        fields = _safe_fields(body, conn)
+        if not fields:
+            raise HTTPException(status_code=400, detail="Aucun champ valide à mettre à jour.")
+        set_clause = ", ".join(f'"{k}" = %s' for k in fields)
+        values     = list(fields.values()) + [siret]
+        with conn.cursor() as cur:
+            cur.execute(
+                f"UPDATE clients SET {set_clause} WHERE siret = %s",
+                values,
+            )
+            if cur.rowcount == 0:
+                raise HTTPException(status_code=404, detail=f"Client introuvable : {siret!r}")
+        conn.commit()
+        return {"success": True, "updated": list(fields.keys())}
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
 @app.delete("/api/client/{siret}", summary="Supprime un client par SIRET")
 def delete_client(siret: str):
     conn = _get_db_conn()

@@ -162,24 +162,105 @@ function exportCSV(data, filename, columns) {
 </script>
 <script src="decl-engine.js"></script>
 <script>
+const TVS_COLS = [
+    { header: "Janv", field: "janvier_tvs"   },
+    { header: "Févr", field: "fevrier_tvs"   },
+    { header: "Mars", field: "mars_tvs"      },
+    { header: "Avr",  field: "avril_tvs"     },
+    { header: "Mai",  field: "mai_tvs"       },
+    { header: "Juin", field: "juin_tvs"      },
+    { header: "Juil", field: "juillet_tvs"   },
+    { header: "Août", field: "aout_tvs"      },
+    { header: "Sept", field: "septembre_tvs" },
+    { header: "Oct",  field: "octobre_tvs"   },
+    { header: "Nov",  field: "novembre_tvs"  },
+    { header: "Déc",  field: "decembre_tvs"  }
+];
+
+// Retourne l'index 0-based du mois actif TVS pour un client
+function getMoisActif(c) {
+    const isTruthy = v => v === true || v === 'true' || v === 't';
+    if (!isTruthy(c.ca12) || !c.date_de_cloture) return 0; // janvier
+    const moisClo = parseInt(c.date_de_cloture.split('-')[1]);
+    if (moisClo === 12) return 4; // mai
+    let m = moisClo + 3;
+    if (m > 12) m -= 12;
+    return m - 1; // index 0-based
+}
+
+async function saveTvsMois(siret, field, value, el) {
+    el.style.background = '#fff3cd';
+    try {
+        const res = await fetch(`${API_URL}/client/${siret}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ [field]: value === '' ? null : parseFloat(value) })
+        });
+        if (!res.ok) throw new Error();
+        el.style.background = '#d4edda';
+        setTimeout(() => { el.style.background = '#fff'; }, 1800);
+    } catch {
+        el.style.background = '#f8d7da';
+    }
+}
+
+// Surcharge display() de decl-engine.js pour le rendu TVS spécifique
+display = function(data) {
+    _currentData = data;
+    const table = document.getElementById('table');
+    document.getElementById('counter').textContent = 'Nombre de dossiers : ' + data.length;
+
+    if (!data.length) {
+        table.innerHTML = `<tr class="loading-row"><td colspan="18">Aucun résultat</td></tr>`;
+        return;
+    }
+
+    const frag = document.createDocumentFragment();
+    data.forEach(c => {
+        const tr = document.createElement('tr');
+        const actifIdx = getMoisActif(c);
+
+        tr.innerHTML = `
+            <td>${esc(c.code_client)}</td>
+            <td class="name"><a href="client.html?siret=${c.siret}" class="client-link">${esc(c.nom_client)}</a></td>
+            <td>${esc(c.assistant)}</td>
+            <td>${esc(c.collaborateur)}</td>
+            <td>${esc(c.annee)}</td>
+            <td>${esc(c.date_de_cloture)}</td>
+        `;
+
+        TVS_COLS.forEach((col, idx) => {
+            const td = document.createElement('td');
+            const inp = document.createElement('input');
+            inp.type  = 'text';
+            inp.value = c[col.field] != null ? c[col.field] : '';
+
+            if (idx === actifIdx) {
+                inp.style.background = '#fff';
+                inp.onchange = function () { saveTvsMois(c.siret, col.field, this.value, this); };
+            } else {
+                inp.disabled = true;
+                inp.style.background = '#f0f0f0';
+                inp.style.color      = '#aaa';
+                inp.style.cursor     = 'not-allowed';
+            }
+
+            td.appendChild(inp);
+            tr.appendChild(td);
+        });
+
+        frag.appendChild(tr);
+    });
+
+    table.innerHTML = '';
+    table.appendChild(frag);
+};
+
 initDeclaratifPage({
     titre: "Suivi TVS",
     emoji: "🚗",
     filterField: "TVS",
-    columns: [
-        { header: "Janv", field: "janvier_tvs"   },
-        { header: "Févr", field: "fevrier_tvs"   },
-        { header: "Mars", field: "mars_tvs"      },
-        { header: "Avr",  field: "avril_tvs"     },
-        { header: "Mai",  field: "mai_tvs"       },
-        { header: "Juin", field: "juin_tvs"      },
-        { header: "Juil", field: "juillet_tvs"   },
-        { header: "Août", field: "aout_tvs"      },
-        { header: "Sept", field: "septembre_tvs" },
-        { header: "Oct",  field: "octobre_tvs"   },
-        { header: "Nov",  field: "novembre_tvs"  },
-        { header: "Déc",  field: "decembre_tvs"  }
-    ]
+    columns: TVS_COLS
 });
 </script>
 
