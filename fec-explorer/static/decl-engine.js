@@ -4,6 +4,14 @@
 let _pageConfig = null;
 let _currentData = [];
 
+function formatClotureJJMM(dateStr) {
+    if (!dateStr) return '';
+    const s = String(dateStr).substring(0, 10);
+    const parts = s.split('-');
+    if (parts.length !== 3) return s;
+    return `${parts[2]}/${parts[1]}`;
+}
+
 function initDeclaratifPage(config) {
     _pageConfig = config;
 
@@ -45,7 +53,7 @@ function display(data) {
             <td>${esc(c.assistant)}</td>
             <td>${esc(c.collaborateur)}</td>
             <td>${esc(c.annee)}</td>
-            <td>${esc(c.date_de_cloture)}</td>
+            <td>${esc(formatClotureJJMM(c.date_de_cloture))}</td>
         `;
 
         // Colonnes dynamiques définies par la config de la page
