@@ -159,7 +159,10 @@ async function load() {
     dataGlobal = _pageConfig.requireFn
         ? data.filter(_pageConfig.requireFn)
         : _pageConfig.filterField
-            ? data.filter(c => c[_pageConfig.filterField] === true || c[_pageConfig.filterField] === 't')
+            ? data.filter(c => {
+                const v = c[_pageConfig.filterField];
+                return v === true || v === 't' || v === 'true';
+            })
             : data;
 
     display(dataGlobal);
