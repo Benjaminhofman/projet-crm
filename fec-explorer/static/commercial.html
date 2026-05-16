@@ -136,6 +136,13 @@ function formatDate(dateStr) {
     return dateStr.substring(0, 10);
 }
 
+// Formatage date ISO → JJ/MM pour l'affichage
+function fmtDate(d) {
+    if (!d) return "";
+    const p = String(d).split("-");
+    return p.length >= 3 ? p[2].substring(0, 2) + "/" + p[1] : d;
+}
+
 // Score de rentabilité (retourne la valeur numérique brute)
 function getRentabiliteScore(val) {
     return parseFloat(val) || 0;
@@ -292,11 +299,11 @@ function display(data) {
             <td>${c.nom_client || ""}</td>
             <td>${c.assistant || ""}</td>
             <td>${c.collaborateur || ""}</td>
-            <td>${c.date_de_cloture || ""}</td>
-            ${buildSelect(c, "suivi mission retraite")}
-            ${buildSelect(c, "suivi mission patrimoniale")}
-            ${buildSelect(c, "suivi mission placement")}
-            ${buildSelect(c, "suivi mission prevoyance")}
+            <td>${fmtDate(c.date_de_cloture)}</td>
+            ${buildSelect(c, "suivi_mission_retraite")}
+            ${buildSelect(c, "suivi_mission_patrimoniale")}
+            ${buildSelect(c, "suivi_mission_placement")}
+            ${buildSelect(c, "suivi_mission_prevoyance")}
 
         </tr>`;
     });
@@ -321,18 +328,6 @@ function buildSelect(c, field) {
 
         </select>
     </td>`;
-}
-
-// update airtable
-async function updateField(id, field, value) {
-    await fetch(API_URL + "/update-airtable", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id, field, value })
-    });
-
-    const client = dataGlobal.find(c => c.siret === id);
-    if (client) client[field] = value;
 }
 
 // navigation (comme opportunités)
@@ -385,5 +380,7 @@ async function load() {
 load();
 </script>
 
+<script src="/auth.js"></script>
+<script>document.addEventListener('DOMContentLoaded', checkAuth);</script>
 </body>
 </html>
