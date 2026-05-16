@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
@@ -365,10 +365,10 @@ function fmtDate(d){if(!d)return"";const p=String(d).split("-");return p.length>
 async function updateField(siret, field, value, el) {
     if (el) el.style.background = "#fff3cd";
     try {
-        const res = await fetch(API_URL + "/update-airtable", {
-            method: "POST",
+        const res = await fetch(`${API_URL}/client/${siret}`, {
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ siret, field, value })
+            body: JSON.stringify({ [field]: value })
         });
         if (!res.ok) throw new Error();
         if (el) el.style.background = "#d4edda";
