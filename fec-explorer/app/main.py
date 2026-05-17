@@ -555,41 +555,16 @@ async def import_clients_csv(file: UploadFile = File(...)):
         conn.close()
 
 
-@app.post("/api/fec/upload", summary="Parse un dossier FEC et retourne les indicateurs")
-def upload_fec(body: FolderRequest):
-    folder = body.folder_path
-
-    if not os.path.isdir(folder):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Dossier introuvable ou inaccessible : {folder}",
-        )
-
-    rows = parse_multiple_fec(folder)
-
-    if not rows:
-        raise HTTPException(
-            status_code=422,
-            detail="Aucun fichier FEC valide trouvé dans ce dossier (pattern attendu : 9chiffres+FEC+8chiffres.txt).",
-        )
-
-    indicateurs = calculate_indicators(rows)
-
-    return {
-        "folder":      folder,
-        "nb_entites":  len(indicateurs),
-        "indicateurs": indicateurs,
-    }
-
-
 _PATTERN_FEC_NAME = re.compile(r"^(\d{9})FEC\d{8}\.txt$", re.IGNORECASE)
 
 
-@app.post("/api/fec/upload-browser", summary="Import FEC multi-fichiers depuis le navigateur")
-async def upload_fec_browser(files: List[UploadFile] = File(...)):
+@app.post("/api/fec/upload", summary="Import FEC multi-fichiers depuis le navigateur")
+async def upload_fec(files: List[UploadFile] = File(...)):
     """
-    Accepte plusieurs fichiers FEC (multipart), les parse, calcule les indicateurs
-    et synchronise en PostgreSQL. Retourne un résultat par fichier.
+    Accepte plusieurs fichiers FEC (multipart).
+    - Extrait le SIRET depuis le nom de chaque fichier (pattern SIREN+FEC+DATE.txt)
+    - Parse via parse_multiple_fec(), calcule les indicateurs, synchronise en PostgreSQL
+    - Retourne {results: [{siret, status, indicators_updated}]} pour chaque fichier
     """
     results = []
 
@@ -601,18 +576,16 @@ async def upload_fec_browser(files: List[UploadFile] = File(...)):
             match = _PATTERN_FEC_NAME.match(filename)
             if not match:
                 results.append({
-                    "filename": filename,
                     "siret": None,
                     "status": "error",
-                    "nb_indicateurs": 0,
-                    "message": "Nom de fichier invalide (attendu : SIREN+FEC+DATE.txt)",
+                    "indicators_updated": 0,
+                    "message": f"Nom invalide : '{filename}' (attendu : SIREN+FEC+DATE.txt)",
                 })
                 continue
 
             siret = match.group(1)
-            dest = os.path.join(tmpdir, filename)
             content = await f.read()
-            with open(dest, "wb") as fout:
+            with open(os.path.join(tmpdir, filename), "wb") as fout:
                 fout.write(content)
             valid_files.append((filename, siret))
 
@@ -622,59 +595,35 @@ async def upload_fec_browser(files: List[UploadFile] = File(...)):
         try:
             rows = parse_multiple_fec(tmpdir)
         except Exception as e:
-            for filename, siret in valid_files:
-                results.append({
-                    "filename": filename,
-                    "siret": siret,
-                    "status": "error",
-                    "nb_indicateurs": 0,
-                    "message": f"Erreur parsing FEC : {e}",
-                })
+            for _, siret in valid_files:
+                results.append({"siret": siret, "status": "error", "indicators_updated": 0, "message": f"Erreur parsing : {e}"})
             return {"results": results}
 
         if not rows:
-            for filename, siret in valid_files:
-                results.append({
-                    "filename": filename,
-                    "siret": siret,
-                    "status": "error",
-                    "nb_indicateurs": 0,
-                    "message": "Aucune donnée FEC trouvée dans le fichier",
-                })
+            for _, siret in valid_files:
+                results.append({"siret": siret, "status": "error", "indicators_updated": 0, "message": "Aucune écriture FEC trouvée"})
             return {"results": results}
 
         indicateurs = calculate_indicators(rows)
         siret_to_ind = {str(ind.get("siret", "")): ind for ind in indicateurs}
 
-        for filename, siret in valid_files:
+        for _, siret in valid_files:
             ind = siret_to_ind.get(siret)
             if not ind:
-                results.append({
-                    "filename": filename,
-                    "siret": siret,
-                    "status": "error",
-                    "nb_indicateurs": 0,
-                    "message": "Aucun indicateur calculé (fichier vide ou comptes non reconnus)",
-                })
+                results.append({"siret": siret, "status": "error", "indicators_updated": 0, "message": "Aucun indicateur calculé"})
                 continue
 
-            nb_ind = sum(1 for k, v in ind.items() if k != "siret" and v is not None)
+            indicators_updated = sum(1 for k, v in ind.items() if k != "siret" and v is not None)
             try:
                 sync_result = sync_all([ind])
                 status = "ok" if sync_result["errors"] == 0 else "warning"
-                msg = "" if sync_result["errors"] == 0 else f"{sync_result['errors']} erreur(s) lors de la synchronisation PostgreSQL"
+                msg = "" if sync_result["errors"] == 0 else f"{sync_result['errors']} erreur(s) sync PostgreSQL"
             except Exception as e:
                 status = "error"
-                msg = f"Erreur sync PostgreSQL : {e}"
-                nb_ind = 0
+                msg = f"Erreur sync : {e}"
+                indicators_updated = 0
 
-            results.append({
-                "filename": filename,
-                "siret": siret,
-                "status": status,
-                "nb_indicateurs": nb_ind,
-                "message": msg,
-            })
+            results.append({"siret": siret, "status": status, "indicators_updated": indicators_updated, "message": msg})
 
     return {"results": results}
 

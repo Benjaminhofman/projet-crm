@@ -2199,7 +2199,7 @@ async function launchFecImport() {
     validFiles.forEach(f => fd.append('files', f, f.name));
 
     try {
-        const res  = await fetch('/api/fec/upload-browser', { method: 'POST', body: fd });
+        const res  = await fetch('/api/fec/upload', { method: 'POST', body: fd });
         const json = await res.json();
 
         if (!res.ok) {
@@ -2218,7 +2218,7 @@ async function launchFecImport() {
             const icon   = r.status === 'ok' ? '✅' : r.status === 'warning' ? '⚠️' : '❌';
             const fname  = String(r.filename || '').replace(/</g,'&lt;');
             const detail = r.status === 'ok'
-                ? `${r.nb_indicateurs} indicateur(s) mis à jour en base`
+                ? `${r.indicators_updated} indicateur(s) mis à jour en base`
                 : String(r.message || 'Erreur inconnue').replace(/</g,'&lt;');
             const siretSpan = r.siret
                 ? `<code style="font-family:monospace;font-size:11px;color:#666">SIREN ${r.siret}</code> — `
