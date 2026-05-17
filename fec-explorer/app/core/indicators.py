@@ -13,7 +13,7 @@ def calculate_indicators(rows: list) -> list:
     Règles de signe (convention FEC créditeur = produit) :
       - ca             : comptes 70        → solde × -1
       - charges        : comptes 6         → solde
-      - produits       : comptes 7 hors 791 → solde × -1
+      - produits       : comptes 7 hors 781 et 791 → solde × -1
       - tresorerie     : comptes 5         → solde
       - emprunt        : comptes 16        → solde
       - masse_salariale: comptes 64        → solde
@@ -25,7 +25,8 @@ def calculate_indicators(rows: list) -> list:
       - publicite      : comptes 623       → solde
       - honoraires     : comptes 6226      → solde
       - banque         : comptes 627       → solde
-      - compte_791              : comptes 791  → solde × -1
+      - compte_781              : comptes 781  → solde × -1  (reprises amort. — neutralisé CAF)
+      - compte_791              : comptes 791  → solde × -1  (transferts de charges — encaissement réel)
       - produits_financiers     : comptes 76   → solde × -1  (sous-ensemble de produits)
       - produits_exceptionnels  : comptes 77   → solde × -1  (sous-ensemble de produits)
       - placements              : comptes 508  → solde       (sous-ensemble de tresorerie)
@@ -84,6 +85,7 @@ def calculate_indicators(rows: list) -> list:
         "publicite":       0.0,
         "honoraires":      0.0,
         "banque":                  0.0,
+        "compte_781":              0.0,
         "compte_791":              0.0,
         "produits_financiers":     0.0,
         "produits_exceptionnels":  0.0,
@@ -131,8 +133,10 @@ def calculate_indicators(rows: list) -> list:
         if _commence_par(compte, "70"):
             acc[siret]["ca"] += solde * -1
 
-        # 791 isolé avant le bloc 7 générique
-        if _commence_par(compte, "791"):
+        # 781 (reprises sur amortissements) et 791 (transferts de charges) isolés avant le bloc 7
+        if _commence_par(compte, "781"):
+            acc[siret]["compte_781"] += solde * -1
+        elif _commence_par(compte, "791"):
             acc[siret]["compte_791"] += solde * -1
         elif _commence_par(compte, "7"):
             acc[siret]["produits"] += solde * -1
@@ -288,7 +292,8 @@ def calculate_indicators(rows: list) -> list:
     # ── Mise en forme finale ──────────────────────────────────────────────────
     resultat = []
     for siret, vals in sorted(acc.items()):
-        c791 = vals["compte_791"]
+        c781 = vals["compte_781"]   # reprises sur amortissements → neutraliser dans CAF
+        c791 = vals["compte_791"]   # transferts de charges → encaissement réel, garder
 
         marge_brute = (
             vals["ca"]
@@ -304,12 +309,12 @@ def calculate_indicators(rows: list) -> list:
         )
         ebe  = va  - vals["masse_salariale"] - vals["impots_taxes"]
         rex  = ebe - vals["dotations_amortissements"]
-        res  = vals["produits"] - vals["charges"] + c791
-        caf  = res + vals["dotations_amortissements"] - c791
+        res  = vals["produits"] - vals["charges"] + c781 + c791
+        caf  = res + vals["dotations_amortissements"] - c781
 
         if siret == "798376810":  # DEBUG temporaire
             print(f"[DEBUG 798376810] produits={vals['produits']} charges={vals['charges']} "
-                  f"c791={c791} dotations={vals['dotations_amortissements']} "
+                  f"c781={c781} c791={c791} dotations={vals['dotations_amortissements']} "
                   f"res={res} caf={caf}")
 
         bfr  = vals["stocks"] + vals["clients"] - abs(vals["fournisseurs"])
@@ -366,6 +371,7 @@ def calculate_indicators(rows: list) -> list:
             "publicite":       round(vals["publicite"],       2),
             "honoraires":      round(vals["honoraires"],      2),
             "banque":                  round(vals["banque"],                  2),
+            "compte_781":              round(c781,                             2),
             "compte_791":              round(c791,                             2),
             "produits_financiers":     round(vals["produits_financiers"],      2),
             "produits_exceptionnels":  round(vals["produits_exceptionnels"],   2),
