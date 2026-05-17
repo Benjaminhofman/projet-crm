@@ -2231,6 +2231,17 @@ async function launchFecImport() {
                 </div></div>`;
         }).join('');
 
+        // Refresh automatique si au moins un import a réussi
+        const importedOk = json.results.filter(r => r.status === 'ok').map(r => r.siret);
+        if (importedOk.length) {
+            allClients = [];
+            await loadAllClients();
+            // Si un client importé est ouvert dans l'onglet Modifier, recharger sa fiche
+            if (selectedSiret && importedOk.includes(selectedSiret)) {
+                selectClient(selectedSiret);
+            }
+        }
+
     } catch(e) {
         resCont.innerHTML = `<div class="fec-result-item error">
             <span class="fec-res-status">❌</span>
