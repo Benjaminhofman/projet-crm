@@ -392,7 +392,7 @@ function display(data) {
             <td>${esc(c.assistant)}</td>
             <td>${esc(c.collaborateur)}</td>
             <td>${esc(c.annee)}</td>
-            <td>${esc(c.date_de_cloture)}</td>
+            <td>${(v => { if (!v) return ''; const p = v.split('-'); return p[2] + '/' + p[1]; })(c.date_de_cloture)}</td>
             <td class="separator"></td>
         `;
 
