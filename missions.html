@@ -132,7 +132,7 @@ function display(data) {
             <td>${c["nom client"] || ""}</td>
             <td>${c["assistant"] || ""}</td>
             <td>${c["collaborateur"] || ""}</td>
-            <td>${c["date de cloture"] || ""}</td>
+            <td>${(v => { if (!v) return ''; const p = v.split('-'); return p[2] + '/' + p[1]; })(c["date de cloture"])}</td>
 
             ${buildTextarea(c, "juridique exceptionnel")}
             ${buildTextarea(c, "previsionnel")}
