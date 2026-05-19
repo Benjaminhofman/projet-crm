@@ -140,10 +140,9 @@ async function loadPage(page = 1) {
     const cloture       = get("filter-cloture")   || get("f-cloture");
 
     const params = new URLSearchParams({ page, limit: _LIMIT });
-    if (_pageConfig?.filterField) {
-        params.set("filterField", _pageConfig.filterField);
-        params.set("filterValue", "true");
-    }
+    const ff = String(_pageConfig?.filterField || '');
+    if (ff) params.append('filterField', ff);
+    if (ff) params.append('filterValue', 'true');
     if (assistant)     params.set("assistant", assistant);
     if (collaborateur) params.set("collaborateur", collaborateur);
     if (annee)         params.set("annee", annee);
