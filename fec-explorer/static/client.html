@@ -319,6 +319,12 @@ function exportCSV(data, filename, columns) {
 
 function fmtDate(v) { if (!v) return ''; const p = v.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; }
 
+function fmtBool(v) {
+    if (v === true || v === 't' || v === 'true' || v === 1 || v === 'oui') return '✅ Oui';
+    if (v === false || v === 'f' || v === 'false' || v === 0 || v === 'non') return '❌ Non';
+    return v || '';
+}
+
 function getSiret() {
     const params = new URLSearchParams(window.location.search);
     return params.get("siret");
