@@ -143,7 +143,7 @@ async function fetchClients() {
         return await res.json();
     } catch (err) {
         console.error("Erreur fetchClients:", err);
-        return [];
+        return { data: [], total: 0 };
     }
 }
 
@@ -312,7 +312,8 @@ function applyFilters() {
 // 🔥 load
 async function load() {
 
-    dataGlobal = await fetchClients();
+    const response = await fetchClients();
+    dataGlobal = response.data ?? response;
 
     applyFilters();
 
