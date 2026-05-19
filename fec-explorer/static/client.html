@@ -176,6 +176,10 @@ h3 {
         <a id="edit-link" href="#" target="_blank" class="btn btn-edit">
             ✏️ Modifier
         </a>
+
+        <a id="opport-link" href="#" class="btn" style="background:#8e44ad;color:white">
+            🎯 Opportunités
+        </a>
     </div>
 
 </div>
@@ -365,6 +369,8 @@ async function loadClient() {
 
     if (editLink) editBtn.href = editLink;
     else editBtn.classList.add("disabled");
+
+    document.getElementById("opport-link").href = "opportunites.html?siret=" + siret;
 
     // 🔥 CALCULS
     const tempsPasse = parseFloat(data.temps_passe) || 0;
