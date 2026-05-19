@@ -225,6 +225,8 @@ def get_clients(
     assistant: str = "",
     annee: str = "",
     cloture: str = "",
+    filterField: str = "",
+    filterValue: str = "",
 ):
     conn = _get_db_conn()
     try:
@@ -246,6 +248,8 @@ def get_clients(
         if cloture:
             conditions.append("date_de_cloture::text ILIKE %s")
             params.append(f"%{cloture}%")
+        if filterField and filterValue == "true":
+            conditions.append(f"{filterField} = TRUE")
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
