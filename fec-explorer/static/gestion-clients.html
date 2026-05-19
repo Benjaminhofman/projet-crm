@@ -1288,7 +1288,8 @@ let allClients = [];
 async function loadAllClients() {
     try {
         const res = await fetch(API_URL + "/clients");
-        allClients = await res.json();
+        const resp = await res.json();
+        allClients = resp.data ?? resp;
         populateCollaborateurList();
         populateAssistantList();
     } catch(e) {
