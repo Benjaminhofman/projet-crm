@@ -2212,6 +2212,24 @@ def migrate_cvae_acomptes_setup():
         conn.close()
 
 
+@app.get("/api/migrate/add_indexes", summary="Crée les index PostgreSQL courants sur la table clients")
+def add_indexes():
+    conn = _get_db_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_clients_nom       ON clients(nom_client)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_clients_collab    ON clients(collaborateur)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_clients_assistant ON clients(assistant)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_clients_annee     ON clients(annee)")
+        conn.commit()
+        return {"ok": True}
+    except psycopg2.Error as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        conn.close()
+
+
 # ── Static files ──────────────────────────────────────────────────────────────
 # Monté en dernier pour ne pas masquer les routes API.
 
