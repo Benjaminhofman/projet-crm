@@ -433,19 +433,19 @@ async function loadClient() {
     html += block("💰 Chiffres clés",
         field("CA", data.ca_r, "kpi-ca") +
         field("Résultat", data.resultat_r, "kpi-resultat") +
-        field("Assurance", data.assurance_r) +
-        field("Déplacement", data.deplacement_r) +
-        field("Loyer", data.loyer_r) +
-        field("CFE", data.cfe_r) +
-        field("Publicité", data.publicite_r) +
-        field("Honoraires", data.honoraires_r) +
-        field("Banque", data.banque_r) +
-        field("Emprunt", data.emprunt_r) +
+        field("Marge brute", data.marge_brute) +
+        field("Valeur ajoutée", data.valeur_ajoutee) +
+        field("EBE", data.ebe) +
+        field("REX", data.rex) +
+        field("CAF", data.caf) +
         field("Masse salariale", data.m_salariale_r) +
-        field("Produits", data.produit_r) +
-        field("Charges", data.charge_r) +
+        field("TNS", data.tns) +
         field("Trésorerie", data.tresorerie_r) +
-        field("Code NAF", data.code_naf_r)
+        field("Clients", data.clients) +
+        field("Stocks", data.stocks) +
+        field("Emprunt", data.emprunt_r) +
+        field("Fournisseurs", data.fournisseurs) +
+        field("Capital", data.capital)
     );
 
     document.getElementById("client-details").innerHTML = html;
