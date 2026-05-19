@@ -1287,7 +1287,7 @@ function showTab(name, btn) {
 let allClients = [];
 async function loadAllClients() {
     try {
-        const res = await fetch(API_URL + "/clients");
+        const res = await fetch(API_URL + "/clients?limit=0");
         const resp = await res.json();
         allClients = resp.data ?? resp;
         populateCollaborateurList();
