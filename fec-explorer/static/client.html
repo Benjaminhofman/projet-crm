@@ -396,10 +396,10 @@ async function loadClient() {
         field("Taux horaire (€ / h)", tauxHoraire.toFixed(2), "kpi-taux") +
 
         field("Prestation", data.prestation) +
-        field("Achat revente", data.achat_revente) +
-        field("Prevoyance", data.prevoyance) +
-        field("Exo entreprise nouvelle", data.exo_entre_nouvelle) +
-        field("Souhait anniversaire", data.souhait_anniversaire)
+        field("Achat revente", fmtBool(data.achat_revente)) +
+        field("Prevoyance", fmtBool(data.prevoyance)) +
+        field("Exo entreprise nouvelle", fmtBool(data.exo_entre_nouvelle)) +
+        field("Souhait anniversaire", fmtBool(data.souhait_anniversaire))
     );
 
     html += block("📝 Commentaire",
@@ -413,13 +413,13 @@ async function loadClient() {
     );
 
     html += block("📊 Déclarations",
-        field("CA12", data.ca12) +
-        field("TVS", data.tvs) +
-        field("CVAE", data.cvae) +
-        field("IR", data.impot_sur_le_revenu) +
-        field("IS", data.is) +
-        field("Liasse", data.liasse) +
-        field("CFE", data.cotisation_fonciere_des_entreprises)
+        field("CA12", fmtBool(data.ca12)) +
+        field("TVS", fmtBool(data.tvs)) +
+        field("CVAE", fmtBool(data.cvae)) +
+        field("IR", fmtBool(data.impot_sur_le_revenu)) +
+        field("IS", fmtBool(data.is)) +
+        field("Liasse", fmtBool(data.liasse)) +
+        field("CFE", fmtBool(data.cotisation_fonciere_des_entreprises))
     );
 
     html += block("🚀 Missions exceptionnelles",
