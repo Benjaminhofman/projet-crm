@@ -279,7 +279,7 @@ async function handleLogin(e) {
         const data = await res.json();
 
         if (res.ok && data.token) {
-            sessionStorage.setItem('crm_token', data.token);
+            localStorage.setItem('crm_token', data.token);
             window.location.href = 'index.html';
         } else {
             setLoading(false);
@@ -293,7 +293,7 @@ async function handleLogin(e) {
 
 // Si déjà connecté, rediriger directement
 (async () => {
-    const token = sessionStorage.getItem('crm_token');
+    const token = localStorage.getItem('crm_token');
     if (!token) return;
     try {
         const res  = await fetch('/api/auth/verify', {
