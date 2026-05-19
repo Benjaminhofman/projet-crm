@@ -1690,9 +1690,24 @@ async function loadBaseTab() {
     renderDbTable();
 }
 
-// Alimente les selects dynamiques depuis les données en mémoire
-function populateDbFilters() {
-    const fill = (id, field) => {
+// Alimente les selects dynamiques
+async function populateDbFilters() {
+    // collaborateur et assistant : valeurs exhaustives depuis l'API
+    const fillFromApi = async (id, field) => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const saved = sel.value;
+        try {
+            const r    = await fetch(`/api/clients/distinct?field=${field}`);
+            const vals = await r.json();
+            sel.innerHTML = '<option value="">Tous</option>' +
+                vals.map(v => `<option value="${v}">${v}</option>`).join('');
+        } catch { /* laisse le select vide en cas d'erreur réseau */ }
+        if (saved) sel.value = saved;
+    };
+
+    // activite_r : construit depuis allClients (déjà chargé)
+    const fillFromMemory = (id, field) => {
         const sel = document.getElementById(id);
         if (!sel) return;
         const saved = sel.value;
@@ -1703,9 +1718,12 @@ function populateDbFilters() {
             vals.map(v => `<option value="${v}">${v}</option>`).join('');
         if (saved) sel.value = saved;
     };
-    fill('dbf-collaborateur', 'collaborateur');
-    fill('dbf-assistant',     'assistant');
-    fill('dbf-activite_r',    'activite_r');
+
+    await Promise.all([
+        fillFromApi('dbf-collaborateur', 'collaborateur'),
+        fillFromApi('dbf-assistant',     'assistant'),
+    ]);
+    fillFromMemory('dbf-activite_r', 'activite_r');
 }
 
 // Réinitialise tous les filtres et rafraîchit le tableau
