@@ -199,9 +199,6 @@ tr:hover {
 <script>
 const API_URL = "/api";
 
-// Variable globale partagée entre toutes les pages déclaratives
-let dataGlobal = [];
-
 // Échappement HTML pour prévenir les injections XSS
 function esc(val) {
     const div = document.createElement('div');
@@ -218,19 +215,6 @@ function formatDate(dateStr) {
 // Score de rentabilité (retourne la valeur numérique brute)
 function getRentabiliteScore(val) {
     return parseFloat(val) || 0;
-}
-
-// Chargement des clients depuis l'API avec gestion d'erreur
-async function fetchClients() {
-    try {
-        const res = await fetch(API_URL + "/clients");
-        if (!res.ok) throw new Error("Erreur HTTP " + res.status);
-        const response = await res.json();
-        return response;
-    } catch (err) {
-        console.error("Erreur fetchClients:", err);
-        return { data: [], total: 0 };
-    }
 }
 
 // Attache applyFilters() sur tous les inputs correspondant au sélecteur CSS
@@ -424,48 +408,91 @@ function display(data) {
     table.appendChild(frag);
 }
 
-// Filtrage combiné (filtres texte + filtres colonnes)
-function applyFilters() {
-    const activeFields = Array.from(
-        document.querySelectorAll("#filter-row input[data-field]:checked")
-    ).map(cb => cb.dataset.field);
+let _currentPage = 1;
+const _LIMIT = 50;
 
-    const assistant = document.getElementById("filter-assistant").value.toLowerCase();
-    const collab    = document.getElementById("filter-collab").value.toLowerCase();
-    const annee     = document.getElementById("filter-annee").value.toLowerCase();
-    const cloture   = document.getElementById("filter-cloture").value.toLowerCase();
-
-    const filtered = dataGlobal.filter(c => {
-        if (assistant && !(c.assistant       || "").toLowerCase().includes(assistant)) return false;
-        if (collab    && !(c.collaborateur   || "").toLowerCase().includes(collab))    return false;
-        if (annee     && !(String(c.annee    || "")).includes(annee))                  return false;
-        if (cloture   && !(c.date_de_cloture || "").toLowerCase().includes(cloture))   return false;
-
-        return activeFields.every(f => {
-            const col = columns.find(col => col.field === f);
-            return col && col.checkedFn ? col.checkedFn(c) : !!c[f];
-        });
-    });
-
-    display(filtered);
+function renderPagination(page, pages, total) {
+    let pag = document.getElementById('pagination');
+    if (!pag) {
+        pag = document.createElement('div');
+        pag.id = 'pagination';
+        pag.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:10px;font-size:14px;padding:4px 0;';
+        document.querySelector('table').after(pag);
+    }
+    pag.innerHTML = `
+        <button onclick="loadPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}
+            style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:white;">
+            ◀ Précédent
+        </button>
+        <span>Page ${page}/${pages} — ${total} dossier${total > 1 ? 's' : ''}</span>
+        <button onclick="loadPage(${page + 1})" ${page >= pages ? 'disabled' : ''}
+            style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:white;">
+            Suivant ▶
+        </button>
+    `;
 }
 
-async function load() {
-    // Skeleton loader pendant le fetch
-    const colCount = 6 + 1 + columns.length; // fixes + séparateur + colonnes déclaratives
-    document.getElementById("table").innerHTML = Array.from({ length: 10 }, () => `
+async function loadPage(page = 1) {
+    _currentPage = page;
+
+    // Skeleton loader
+    const colCount = 6 + 1 + columns.length;
+    document.getElementById("table").innerHTML = Array.from({ length: 8 }, () => `
         <tr class="skeleton-row">
             ${Array.from({ length: colCount }, () => `<td><span class="skeleton"></span></td>`).join('')}
         </tr>
     `).join('');
 
-    const response = await fetchClients();
-    dataGlobal = response.data ?? [];
-    document.getElementById("counter").textContent = "Nombre de dossiers : " + (response.total ?? dataGlobal.length);
+    const get = id => (document.getElementById(id) || { value: '' }).value.trim();
+    const params = new URLSearchParams({ page, limit: _LIMIT });
+    const assistant    = get('filter-assistant');
+    const collaborateur = get('filter-collab');
+    const annee        = get('filter-annee');
+    const cloture      = get('filter-cloture');
+    if (assistant)     params.set('assistant',     assistant);
+    if (collaborateur) params.set('collaborateur', collaborateur);
+    if (annee)         params.set('annee',         annee);
+    if (cloture)       params.set('cloture',       cloture);
 
+    let response;
+    try {
+        const res = await fetch(`${API_URL}/clients?${params}`);
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        response = await res.json();
+    } catch (err) {
+        console.error("loadPage:", err);
+        document.getElementById("table").innerHTML =
+            `<tr><td colspan="${6 + 1 + columns.length}" style="color:#e74c3c;padding:20px;text-align:center;">Erreur de chargement</td></tr>`;
+        return;
+    }
+
+    const data = response.data ?? [];
+
+    // Filtrage JS uniquement pour les cases à cocher de colonnes
+    const activeFields = Array.from(
+        document.querySelectorAll("#filter-row input[data-field]:checked")
+    ).map(cb => cb.dataset.field);
+
+    const filtered = activeFields.length
+        ? data.filter(c => activeFields.every(f => {
+            const col = columns.find(col => col.field === f);
+            return col?.checkedFn ? col.checkedFn(c) : !!c[f];
+        }))
+        : data;
+
+    document.getElementById("counter").textContent =
+        "Nombre de dossiers : " + (activeFields.length ? filtered.length : response.total);
+
+    display(filtered);
+    renderPagination(response.page, response.pages, response.total);
+}
+
+function applyFilters() { loadPage(1); }
+
+async function load() {
     buildFilterRow();
-    display(dataGlobal);
     bindFilterInputs(".filters-top input");
+    await loadPage(1);
 }
 
 load();
