@@ -11,7 +11,7 @@ let _warningBanner = null;
 // ── Déconnexion ───────────────────────────────────────────────────────────────
 
 function logout() {
-    sessionStorage.removeItem('crm_token');
+    localStorage.removeItem('crm_token');
     window.location.replace('/login.html');
 }
 
@@ -164,7 +164,7 @@ function injectLogoutButton() {
 // ── Vérification auth ─────────────────────────────────────────────────────────
 
 async function checkAuth() {
-    const token = sessionStorage.getItem('crm_token');
+    const token = localStorage.getItem('crm_token');
     if (!token) {
         window.location.replace('/login.html');
         return;
@@ -175,7 +175,7 @@ async function checkAuth() {
         });
         const data = await res.json();
         if (!data.valid) {
-            sessionStorage.removeItem('crm_token');
+            localStorage.removeItem('crm_token');
             window.location.replace('/login.html');
         } else {
             injectLogoutButton();
