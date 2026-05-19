@@ -358,17 +358,13 @@ async function loadClient() {
     const res = await fetch(API_URL + "/client/" + siret);
     const data = await res.json();
 
-    const createLink = data.creer_client;
-    const editLink = data.lien_modification;
-
     const createBtn = document.getElementById("create-link");
     const editBtn = document.getElementById("edit-link");
 
-    if (createLink) createBtn.href = createLink;
-    else createBtn.classList.add("disabled");
-
-    if (editLink) editBtn.href = editLink;
-    else editBtn.classList.add("disabled");
+    createBtn.href = "gestion-clients.html";
+    editBtn.href = "gestion-clients.html?siret=" + siret + "&action=modifier";
+    createBtn.classList.remove("disabled");
+    editBtn.classList.remove("disabled");
 
     document.getElementById("opport-link").href = "opportunites.html?siret=" + siret;
 
