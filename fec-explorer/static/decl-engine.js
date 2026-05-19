@@ -128,7 +128,8 @@ async function load() {
         </tr>
     `).join('');
 
-    const data = await fetchClients();
+    const json = await fetchClients();
+    const data = json.data ?? json;
 
     dataGlobal = _pageConfig.filterField
         ? data.filter(c => { const v = c[_pageConfig.filterField?.toLowerCase()]; return v === true || v === 't' || v === 'true' || v === 1; })
