@@ -248,7 +248,8 @@ def get_clients(
         if cloture:
             conditions.append("date_de_cloture::text ILIKE %s")
             params.append(f"%{cloture}%")
-        if filterField and filterValue == "true":
+        ALLOWED = {"cvae","is","tvs","ca12","liasse","impot_sur_le_revenu","cotisation_fonciere_entreprise","dividendes","situation","tbb","juridique"}
+        if filterField and filterField in ALLOWED and filterValue == "true":
             conditions.append(f"{filterField} = TRUE")
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
