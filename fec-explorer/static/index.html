@@ -639,7 +639,10 @@ async function loadClients() {
     document.getElementById("avg-honos").innerHTML     = '<span class="skeleton-card" style="width:90px;"></span>';
 
     const res = await fetch(API_URL + "/clients");
-    clientsData = await res.json();
+    const response = await res.json();
+    const total = response.total;
+    const pages = response.pages;
+    clientsData = response.data;
 
     if (clientsData.length > 0) console.log("[DEBUG] champs client[0] :", clientsData[0]);
 
@@ -780,8 +783,8 @@ function updateDashboard(data) {
 loadClients();
 setInterval(async () => {
     const res = await fetch(API_URL + "/clients");
-    const newData = await res.json();
-    clientsData = newData;
+    const response = await res.json();
+    clientsData = response.data;
 }, 5 * 60 * 1000);
 
 /* Menu déroulant navigation */
