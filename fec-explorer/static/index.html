@@ -480,7 +480,7 @@ let _currentData = []; // données de la page courante (tri, export)
 
 function badgeRendement(val) {
     const n = parseFloat(val);
-    if (isNaN(n) || val === null || val === "") return "<span style=’color:#aaa’>—</span>";
+    if (isNaN(n) || val === null || val === "") return "<span style='color:#aaa'>—</span>";
     let cls, label;
     if      (n >= 80) { cls = "badge-excellent"; label = "Excellent"; }
     else if (n >= 60) { cls = "badge-bon";       label = "Bon"; }
@@ -500,18 +500,18 @@ function getTranche(val) {
 
 function checkAnniversaires(data) {
     const today = new Date();
-    const j = String(today.getDate()).padStart(2, ‘0’);
-    const m = String(today.getMonth() + 1).padStart(2, ‘0’);
+    const j = String(today.getDate()).padStart(2, '0');
+    const m = String(today.getMonth() + 1).padStart(2, '0');
     const annivs = data.filter(c => {
         if (!c["anniversaire"]) return false;
         const d = new Date(c["anniversaire"]);
-        return String(d.getDate()).padStart(2, ‘0’) === j &&
-               String(d.getMonth() + 1).padStart(2, ‘0’) === m;
+        return String(d.getDate()).padStart(2, '0') === j &&
+               String(d.getMonth() + 1).padStart(2, '0') === m;
     });
     if (annivs.length > 0) {
         const div = document.getElementById("alert-anniv");
         div.style.display = "block";
-        div.innerHTML = "🎂 Anniversaire aujourd’hui : " +
+        div.innerHTML = "🎂 Anniversaire aujourd'hui : " +
             annivs.map(a => a.nom_client).join(", ");
     }
 }
@@ -531,7 +531,7 @@ function buildFilters(data) {
         if (f.type === "text") {
             group.innerHTML = `
                 <strong>${f.label}</strong>
-                <input type="text" placeholder=’Ex : "03" pour mars...’ data-field="${f.field}" id="text-filter-${f.field}" style="margin-top:6px;width:100%;box-sizing:border-box;">
+                <input type="text" placeholder='Ex : "03" pour mars...' data-field="${f.field}" id="text-filter-${f.field}" style="margin-top:6px;width:100%;box-sizing:border-box;">
             `;
             container.appendChild(group);
             group.querySelector("input").addEventListener("input", applyFilters);
@@ -579,18 +579,18 @@ async function loadPage(page = 1) {
     const tbody = document.getElementById("clients-table");
     tbody.innerHTML = Array.from({ length: 10 }, () => `
         <tr class="skeleton-row">
-            ${Array.from({ length: 13 }, () => `<td><span class="skeleton"></span></td>`).join(‘’)}
+            ${Array.from({ length: 13 }, () => `<td><span class="skeleton"></span></td>`).join('')}
         </tr>
-    `).join(‘’);
-    document.getElementById("total-clients").innerHTML = ‘<span class="skeleton-card"></span>’;
-    document.getElementById("avg-honos").innerHTML     = ‘<span class="skeleton-card" style="width:90px;"></span>’;
+    `).join('');
+    document.getElementById("total-clients").innerHTML = '<span class="skeleton-card"></span>';
+    document.getElementById("avg-honos").innerHTML     = '<span class="skeleton-card" style="width:90px;"></span>';
 
-    const get = id => (document.getElementById(id) || {value: ‘’}).value.trim();
+    const get = id => (document.getElementById(id) || {value: ''}).value.trim();
     const search       = get("search");
     const tranche      = get("filter-tranche");
     const cloture      = get("text-filter-date_de_cloture");
-    const collaborateur = [...document.querySelectorAll(‘input[type=checkbox][data-field="collaborateur"]:checked’)].map(c => c.value)[0] || ‘’;
-    const assistant     = [...document.querySelectorAll(‘input[type=checkbox][data-field="assistant"]:checked’)].map(c => c.value)[0] || ‘’;
+    const collaborateur = [...document.querySelectorAll('input[type=checkbox][data-field="collaborateur"]:checked')].map(c => c.value)[0] || '';
+    const assistant     = [...document.querySelectorAll('input[type=checkbox][data-field="assistant"]:checked')].map(c => c.value)[0] || '';
 
     const params = new URLSearchParams({ page, limit: _LIMIT });
     if (search)        params.set("search", search);
@@ -615,20 +615,20 @@ async function loadPage(page = 1) {
 }
 
 function renderPagination(page, pages, total) {
-    let pag = document.getElementById(‘pagination’);
+    let pag = document.getElementById('pagination');
     if (!pag) {
-        pag = document.createElement(‘div’);
-        pag.id = ‘pagination’;
-        pag.style.cssText = ‘display:flex;align-items:center;gap:12px;margin-top:10px;font-size:14px;padding:10px 0;’;
-        document.querySelector(‘table’).after(pag);
+        pag = document.createElement('div');
+        pag.id = 'pagination';
+        pag.style.cssText = 'display:flex;align-items:center;gap:12px;margin-top:10px;font-size:14px;padding:10px 0;';
+        document.querySelector('table').after(pag);
     }
     pag.innerHTML = `
-        <button onclick="loadPage(${page - 1})" ${page <= 1 ? ‘disabled’ : ‘’}
+        <button onclick="loadPage(${page - 1})" ${page <= 1 ? 'disabled' : ''}
             style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:white;">
             ◀ Précédent
         </button>
-        <span>Page ${page}/${pages} — ${total} dossier${total > 1 ? ‘s’ : ‘’}</span>
-        <button onclick="loadPage(${page + 1})" ${page >= pages ? ‘disabled’ : ‘’}
+        <span>Page ${page}/${pages} — ${total} dossier${total > 1 ? 's' : ''}</span>
+        <button onclick="loadPage(${page + 1})" ${page >= pages ? 'disabled' : ''}
             style="padding:5px 12px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:white;">
             Suivant ▶
         </button>
@@ -643,18 +643,18 @@ function displayClients(data) {
     table.innerHTML = "";
 
     if (!data.length) {
-        table.innerHTML = "<tr><td colspan=’13’>Aucun résultat</td></tr>";
+        table.innerHTML = "<tr><td colspan='13'>Aucun résultat</td></tr>";
         return;
     }
 
     data.forEach(c => {
         table.innerHTML += `
-        <tr onclick="viewClient(‘${c.siret}’)">
+        <tr onclick="viewClient('${c.siret}')">
             <td>${c.code_client || ""}</td>
             <td><strong>${c.nom_client || ""}</strong></td>
             <td>${formatDateEU(c.date_de_cloture)}</td>
             <td>${c.structure || ""}</td>
-            <td>${c.anciennete > 0 ? c.anciennete + ‘ an’ + (c.anciennete > 1 ? ‘s’ : ‘’) : ‘—‘}</td>
+            <td>${c.anciennete > 0 ? c.anciennete + ' an' + (c.anciennete > 1 ? 's' : '') : '—'}</td>
             <td>${badgeRendement(c.rendement)}</td>
             <td>${c.honoraires_cpta || ""}</td>
             <td>${c.collaborateur || ""}</td>
@@ -663,7 +663,7 @@ function displayClients(data) {
             <td>${c.resultat_r || ""}</td>
             <td>${c.activite_r || ""}</td>
             <td>
-                <button class="btn" onclick="event.stopPropagation(); viewClient(‘${c.siret}’)">
+                <button class="btn" onclick="event.stopPropagation(); viewClient('${c.siret}')">
                     Voir
                 </button>
             </td>
@@ -696,7 +696,7 @@ function viewClient(siret) {
 }
 
 function exportIndexCSV() {
-    exportCSV(_currentData, ‘clients.csv’, [
+    exportCSV(_currentData, 'clients.csv', [
         { label: "Code",          field: "code_client" },
         { label: "Nom",           field: "nom_client" },
         { label: "Clôture",       field: "date_de_cloture" },
@@ -717,7 +717,7 @@ function updateDashboard(data) {
     const avg = total ? totalHonos / total : 0;
     document.getElementById("total-clients").innerText = total;
     document.getElementById("avg-honos").innerText =
-        new Intl.NumberFormat(‘fr-FR’, { style: ‘currency’, currency: ‘EUR’ }).format(avg);
+        new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(avg);
 }
 
 document.getElementById("search").addEventListener("input", applyFilters);
@@ -728,17 +728,17 @@ setInterval(() => loadPage(_currentPage), 5 * 60 * 1000);
 
 /* Menu déroulant navigation */
 function toggleNavMenu() {
-    const menu = document.getElementById(‘nav-menu’);
-    const btn  = document.getElementById(‘nav-btn’);
-    menu.classList.toggle(‘open’);
-    btn.classList.toggle(‘open’);
+    const menu = document.getElementById('nav-menu');
+    const btn  = document.getElementById('nav-btn');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
 }
 
-document.addEventListener(‘click’, function(e) {
-    const dropdown = document.querySelector(‘.nav-dropdown’);
+document.addEventListener('click', function(e) {
+    const dropdown = document.querySelector('.nav-dropdown');
     if (dropdown && !dropdown.contains(e.target)) {
-        document.getElementById(‘nav-menu’).classList.remove(‘open’);
-        document.getElementById(‘nav-btn’).classList.remove(‘open’);
+        document.getElementById('nav-menu').classList.remove('open');
+        document.getElementById('nav-btn').classList.remove('open');
     }
 });
 </script>
