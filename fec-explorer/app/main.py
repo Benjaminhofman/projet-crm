@@ -250,7 +250,7 @@ def get_clients(
             params.append(f"%{cloture}%")
         ALLOWED = {"cvae","is","tvs","ca12","liasse","impot_sur_le_revenu","cotisation_fonciere_entreprise","dividendes","situation","tbb","juridique"}
         if filterField and filterField in ALLOWED and filterValue == "true":
-            conditions.append(f"{filterField} = TRUE")
+            conditions.append(f'"{filterField}" = TRUE')
 
         where = ("WHERE " + " AND ".join(conditions)) if conditions else ""
 
